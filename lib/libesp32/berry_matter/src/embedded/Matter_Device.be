@@ -116,8 +116,8 @@ class Matter_Device
     # autoconfigure other plugins
     self.autoconf_device()
 
-    # for now read sensors every 5 seconds
-    tasmota.add_cron("*/5 * * * * *", def () self._trigger_read_sensors() end, "matter_sensors_5s")
+    # for now read sensors every 30 seconds
+    tasmota.add_cron("*/30 * * * * *", def () self._trigger_read_sensors() end, "matter_sensors_30s")
 
     self._start_udp(self.UDP_PORT)
 
@@ -147,6 +147,10 @@ class Matter_Device
     var pairing_code = self.compute_manual_pairing_code()
     tasmota.log(string.format("MTR: Manual pairing code: %s-%s-%s", pairing_code[0..3], pairing_code[4..6], pairing_code[7..]), 2)
     
+    # output MQTT
+    var qr_code = self.compute_qrcode_content()
+    tasmota.publish_result(string.format('{"Matter":{"Commissioning":1,"PairingCode":"%s","QRCode":"%s"}}', pairing_code, qr_code), 'Matter')
+
     # compute PBKDF
     self._compute_pbkdf(self.root_passcode, self.root_iterations, self.root_salt)
     self.start_basic_commissioning(timeout_s, self.root_iterations, self.root_discriminator, self.root_salt, self.root_w0, #-self.root_w1,-# self.root_L, nil)
@@ -202,6 +206,9 @@ class Matter_Device
   #############################################################
   # Stop PASE commissioning, mostly called when CASE is about to start
   def stop_basic_commissioning()
+    if self.is_root_commissioning_open()
+      tasmota.publish_result('{"Matter":{"Commissioning":0}}', 'Matter')
+    end
     self.commissioning_open = nil
 
     self.mdns_remove_PASE()
@@ -548,6 +555,7 @@ class Matter_Device
             ctx.cluster = cl
             ctx.attribute = at
             var finished = cb(pi, ctx, direct)   # call the callback with the plugin and the context
+            # tasmota.log("MTR: gc="+str(tasmota.gc()), 2)
             if direct && finished     return end
           end
         end
@@ -908,6 +916,7 @@ class Matter_Device
   #
   def autoconf_device()
     import string
+    import json
     # check if we have a light
     var endpoint = 1
     var light_present = false
@@ -944,7 +953,72 @@ class Matter_Device
       endpoint += 1
     end
 
+    # auto-detect sensors
+    var sensors = json.load(tasmota.read_sensors())
+
+    # temperature sensors
+    # they are starting at endpoint `32..39` (8 max)
+    endpoint = 0x20
+    for k1:self.k2l(sensors)
+      var sensor_2 = sensors[k1]
+      if isinstance(sensor_2, map) && sensor_2.contains("Temperature")
+        var temp_rule = k1 + "#Temperature"
+        self.plugins.push(matter.Plugin_Sensor_Temp(self, endpoint, temp_rule))
+        tasmota.log(string.format("MTR: Endpoint:%i Temperature (%s)", endpoint, temp_rule), 2)
+        endpoint += 1
+      end
+      if endpoint > 0x28 break end
+    end
+
+    # pressure sensors
+    # they are starting at endpoint `40..47` (8 max)
+    endpoint = 0x28
+    for k1:self.k2l(sensors)
+      var sensor_2 = sensors[k1]
+      if isinstance(sensor_2, map) && sensor_2.contains("Pressure")
+        var temp_rule = k1 + "#Pressure"
+        self.plugins.push(matter.Plugin_Sensor_Pressure(self, endpoint, temp_rule))
+        tasmota.log(string.format("MTR: Endpoint:%i Pressure (%s)", endpoint, temp_rule), 2)
+        endpoint += 1
+      end
+      if endpoint > 0x2F break end
+    end
+
+    # light sensors
+    # they are starting at endpoint `48..55` (8 max)
+    endpoint = 0x30
+    for k1:self.k2l(sensors)
+      var sensor_2 = sensors[k1]
+      if isinstance(sensor_2, map) && sensor_2.contains("Illuminance")
+        var temp_rule = k1 + "#Illuminance"
+        self.plugins.push(matter.Plugin_Sensor_Light(self, endpoint, temp_rule))
+        tasmota.log(string.format("MTR: Endpoint:%i Light (%s)", endpoint, temp_rule), 2)
+        endpoint += 1
+      end
+      if endpoint > 0x38 break end
+    end
+
+    # huidity sensors
+    # they are starting at endpoint `56..63` (8 max)
+    endpoint = 0x38
+    for k1:self.k2l(sensors)
+      var sensor_2 = sensors[k1]
+      if isinstance(sensor_2, map) && sensor_2.contains("Humidity")
+        var temp_rule = k1 + "#Humidity"
+        self.plugins.push(matter.Plugin_Sensor_Humidity(self, endpoint, temp_rule))
+        tasmota.log(string.format("MTR: Endpoint:%i Humidity (%s)", endpoint, temp_rule), 2)
+        endpoint += 1
+      end
+      if endpoint > 0x40 break end
+    end
+
   end
+
+  # get keys of a map in sorted order
+  static def k2l(m) var l=[] if m==nil return l end for k:m.keys() l.push(k) end
+    for i:1..size(l)-1 var k = l[i] var j = i while (j > 0) && (l[j-1] > k) l[j] = l[j-1] j -= 1 end l[j] = k end return l
+  end
+
 end
 matter.Device = Matter_Device
 

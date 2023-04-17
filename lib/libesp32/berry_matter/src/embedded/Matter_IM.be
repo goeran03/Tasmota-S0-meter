@@ -216,11 +216,16 @@ class Matter_IM
     # should return true if answered, false if passing to next handler
     def read_single_attribute(ret, pi, ctx, direct)
       import string
+      var TLV = matter.TLV
       var attr_name = matter.get_attribute_name(ctx.cluster, ctx.attribute)
       attr_name = attr_name ? " (" + attr_name + ")" : ""
       # Special case to report unsupported item, if pi==nil
       var res = (pi != nil) ? pi.read_attribute(session, ctx) : nil
+      var found = true                # stop expansion since we have a value
+      var a1_raw                      # this is the bytes() block we need to add to response (or nil)
       if res != nil
+        var res_str = str(res)        # get the value with anonymous tag before it is tagged, for logging
+
         var a1 = matter.AttributeReportIB()
         a1.attribute_data = matter.AttributeDataIB()
         a1.attribute_data.data_version = 1
@@ -230,13 +235,17 @@ class Matter_IM
         a1.attribute_data.path.attribute = ctx.attribute
         a1.attribute_data.data = res
 
-        ret.attribute_reports.push(a1)
+        var a1_tlv = a1.to_TLV()
+        var a1_len = a1_tlv.encode_len()
+        var a1_bytes = bytes(a1_len)        # pre-size bytes() to the actual size
+        a1_raw = a1_tlv.tlv2raw(a1_bytes)
+        # tasmota.log(string.format("MTR: guessed len=%i actual=%i '%s'", a1_len, size(a1_raw), a1_raw.tohex()), 2)
+
         if !no_log
-          tasmota.log(string.format("MTR: >Read_Attr (%6i) %s%s - %s", session.local_session_id, str(ctx), attr_name, str(res)), 2)
-        end
-        return true                         # stop expansion since we have a value
+          tasmota.log(string.format("MTR: >Read_Attr (%6i) %s%s - %s", session.local_session_id, str(ctx), attr_name, res_str), 2)
+        end          
       elif ctx.status != nil
-        if direct
+        if direct                           # we report an error only if a concrete direct read, not with wildcards
           var a1 = matter.AttributeReportIB()
           a1.attribute_status = matter.AttributeStatusIB()
           a1.attribute_status.path = matter.AttributePathIB()
@@ -246,15 +255,35 @@ class Matter_IM
           a1.attribute_status.path.attribute = ctx.attribute
           a1.attribute_status.status.status = ctx.status
 
-          ret.attribute_reports.push(a1)
+          var a1_tlv = a1.to_TLV()
+          var a1_len = a1_tlv.encode_len()
+          var a1_bytes = bytes(a1_len)        # pre-size bytes() to the actual size
+          a1_raw = a1_tlv.tlv2raw(a1_bytes)
+
           tasmota.log(string.format("MTR: >Read_Attr (%6i) %s%s - STATUS: 0x%02X %s", session.local_session_id, str(ctx), attr_name, ctx.status, ctx.status == matter.UNSUPPORTED_ATTRIBUTE ? "UNSUPPORTED_ATTRIBUTE" : ""), 2)
-          return true
         end
       else
         tasmota.log(string.format("MTR: >Read_Attr (%6i) %s%s - IGNORED", session.local_session_id, str(ctx), attr_name), 2)
         # ignore if content is nil and status is undefined
-        return false
+        found = false
       end
+
+      # check if we still have enough room in last block
+      if a1_raw         # do we have bytes to add, and it's not zero size
+        if size(ret.attribute_reports) == 0
+          ret.attribute_reports.push(a1_raw)      # push raw binary instead of a TLV
+        else    # already blocks present, see if we can add to the latest, or need to create a new block
+          var last_block = ret.attribute_reports[-1]
+          if size(last_block) + size(a1_raw) <= matter.IM_ReportData.MAX_MESSAGE
+            # add to last block
+            last_block .. a1_raw
+          else
+            ret.attribute_reports.push(a1_raw)      # push raw binary instead of a TLV
+          end
+        end
+      end
+
+      return found          # return true if we had a match
     end
 
     var endpoints = self.device.get_active_endpoints()
