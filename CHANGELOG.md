@@ -5,12 +5,17 @@ All notable changes to this project will be documented in this file.
 
 ## [12.5.0.1]
 ### Added
+- Matter sensors Humidity, Pressure, Illuminance; optimize memory (#18441)
+- Command ``SetOption152 0/1`` to select two (0 = default) pin bistable or one (1) pin latching relay control (#18386)
+- Matter allow `Matter#Initialized` rule once the device is configured (#18451)
 
 ### Breaking Changed
 
 ### Changed
 
 ### Fixed
+- ESP8266 Energy Export Active no update regression from v12.3.1.3
+- NovaSDS GUI values (#18444)
 
 ### Removed
 
@@ -29,7 +34,6 @@ All notable changes to this project will be documented in this file.
 - Berry `instrospect.name()` to get names of functions, modules and classes (#18422)
 - Berry add `searchall()` and `matchall()` to `re` module and pre-compiled patterns (#18429)
 - Matter automatically exposes all detected Temperature sensors (#18430)
-- Matter add sensors: Humidity, Pressure, Illuminance; optimize memory
 
 ### Changed
 - ESP32 LVGL library from v8.3.5 to v8.3.6 (no functional change)
