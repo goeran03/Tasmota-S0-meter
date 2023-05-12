@@ -12,12 +12,20 @@ All notable changes to this project will be documented in this file.
 - ESP32 `Shuttersetup` for "Shelly 2.5 pro" automatic calibration and setup (experimental)
 - Berry `tcpclientasync` class for non-blocking TCP client
 - Support for GM861 1D and 2D bar code reader (#18399)
+- Berry `re` (regex) add `match2` and optional offset
 
 ### Breaking Changed
+- Change command ``FileUpload`` index binary data detection from >199 to >299
 
 ### Changed
+- ESP32 Framework (Core) from v2.0.8 to v2.0.9
+- autoconf extract `display.ini` to file system
+- IRremoteESP8266 library from v2.8.4 to v2.8.5
+- Energy power delta report delayed by two seconds allowing hardware to stabilize (#17751)
 
 ### Fixed
+- Partition_Manager.tapp fixed
+- Berry fixed a rare condition when a GC causes a memory corruption
 
 ### Removed
 

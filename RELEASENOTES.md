@@ -36,9 +36,9 @@ While fallback or downgrading is common practice it was never supported due to S
 
 This release will be supported from ESP8266/Arduino library Core version **2.7.4.9** due to reported security and stability issues on previous Core version. This will also support gzipped binaries.
 
-This release will be supported from ESP32/Arduino library Core version **2.0.8**.
+This release will be supported from ESP32/Arduino library Core version **2.0.9**.
 
-Support of ESP8266 Core versions before 2.7.4.9 and ESP32 Core versions before 2.0.8 have been removed.
+Support of ESP8266 Core versions before 2.7.4.9 and ESP32 Core versions before 2.0.9 have been removed.
 
 ## Support of TLS
 
@@ -80,7 +80,7 @@ Historical binaries can be downloaded from
 The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmota.com/tasmota/release/tasmota.bin.gz``
 
 ### ESP32, ESP32-C3, ESP32-S2 and ESP32-S3 based
-The following binary downloads have been compiled with ESP32/Arduino library core version **2.0.8**.
+The following binary downloads have been compiled with ESP32/Arduino library core version **2.0.9**.
 
 - **tasmota32.bin** = The Tasmota version with most drivers including additional sensors and KNX for 4M+ flash.  **RECOMMENDED RELEASE BINARY**
 - **tasmota32xy.bin** = The Tasmota version with most drivers including additional sensors and KNX for ESP32-C3/S2/S3 and 4M+ flash.
@@ -124,12 +124,17 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Berry `tcpclientasync` class for non-blocking TCP client
 
 ### Breaking Changed
+- Change command ``FileUpload`` index binary data detection from >199 to >299
 
 ### Changed
-- ESP32 Framework (Core) from v2.0.7 to v2.0.8
+- IRremoteESP8266 library from v2.8.4 to v2.8.5
+- ESP32 Framework (Core) from v2.0.7 to v2.0.9
 - Refactored Zero Cross Dimmer [#18481](https://github.com/arendst/Tasmota/issues/18481)
+- Energy power delta report delayed by two seconds allowing hardware to stabilize [#17751](https://github.com/arendst/Tasmota/issues/17751)
 
 ### Fixed
 - ESP8266 Energy Export Active no update regression from v12.3.1.3
 - NovaSDS GUI values [#18444](https://github.com/arendst/Tasmota/issues/18444)
 - Berry fix rules for string comparisons [#18464](https://github.com/arendst/Tasmota/issues/18464)
+- Berry a rare condition when a GC causes a memory corruption
+- Partition_Manager.tapp
