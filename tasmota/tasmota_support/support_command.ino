@@ -2523,12 +2523,15 @@ void CmndLedPwmMode(void) {
   }
 }
 
-void CmndWifiPower(void)
-{
+void CmndWifiPower(void) {
   if (XdrvMailbox.data_len > 0) {
     Settings->wifi_output_power = (uint8_t)(CharToFloat(XdrvMailbox.data) * 10);
-    if (Settings->wifi_output_power > 205) {
-      Settings->wifi_output_power = 205;
+    if (10 == Settings->wifi_output_power) {
+      // WifiPower 1
+      Settings->wifi_output_power = MAX_TX_PWR_DBM_54g;
+    }
+    else if (Settings->wifi_output_power > MAX_TX_PWR_DBM_11b) {
+      Settings->wifi_output_power = MAX_TX_PWR_DBM_11b;
     }
     WifiSetOutputPower();
   }
@@ -2567,14 +2570,20 @@ void CmndDnsTimeout(void) {
 }
 
 #ifdef USE_I2C
-void CmndI2cScan(void)
-{
-  if ((1 == XdrvMailbox.index) && (TasmotaGlobal.i2c_enabled)) {
-    I2cScan();
+void CmndI2cScan(void) {
+  // I2CScan0  - Scan bus1 and bus2
+  // I2CScan   - Scan bus1
+  // I2CScan2  - Scan bus2
+  if (TasmotaGlobal.i2c_enabled) {
+    if ((0 == XdrvMailbox.index) || (1 == XdrvMailbox.index)) {
+      I2cScan();
+    }
   }
 #ifdef ESP32
-  if ((2 == XdrvMailbox.index) && (TasmotaGlobal.i2c_enabled_2)) {
-    I2cScan(1);
+  if (TasmotaGlobal.i2c_enabled_2) {
+    if ((0 == XdrvMailbox.index) || (2 == XdrvMailbox.index)) {
+      I2cScan(1);
+    }
   }
 #endif
 }
