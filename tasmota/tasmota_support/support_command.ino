@@ -883,8 +883,9 @@ void CmndStatus(void)
 
 #endif // USE_IPV6
 #endif  // USE_ETHERNET
-    ResponseAppend_P(PSTR(",\"" D_CMND_WEBSERVER "\":%d,\"HTTP_API\":%d,\"" D_CMND_WIFICONFIG "\":%d,\"" D_CMND_WIFIPOWER "\":%s}}"),
-                          Settings->webserver, Settings->flag5.disable_referer_chk, Settings->sta_config, WifiGetOutputPower().c_str());
+    float wifi_tx_power = WifiGetOutputPower();
+    ResponseAppend_P(PSTR(",\"" D_CMND_WEBSERVER "\":%d,\"HTTP_API\":%d,\"" D_CMND_WIFICONFIG "\":%d,\"" D_CMND_WIFIPOWER "\":%1_f}}"),
+                          Settings->webserver, Settings->flag5.disable_referer_chk, Settings->sta_config, &wifi_tx_power);
     CmndStatusResponse(5);
   }
 
@@ -1473,6 +1474,7 @@ void CmndSetoptionBase(bool indexed) {
             switch (pindex) {
               case 5:                     // SetOption151 - Matter enabled
               case 6:                     // SetOption152 - (Power) Use single pin bistable
+              case 7:                     // SetOption153 - (Berry) Disable autoexec.be on restart (1)
                 TasmotaGlobal.restart_flag = 2;
                 break;
             }
@@ -2535,7 +2537,7 @@ void CmndWifiPower(void) {
     }
     WifiSetOutputPower();
   }
-  ResponseCmndChar(WifiGetOutputPower().c_str());
+  ResponseCmndFloat(WifiGetOutputPower(), 1);
 }
 
 void CmndWifi(void)

@@ -974,14 +974,11 @@ int WifiState(void)
   return state;
 }
 
-String WifiGetOutputPower(void) {
-  char stemp1[TOPSZ];
+float WifiGetOutputPower(void) {
   if (Settings->wifi_output_power) {
-    dtostrfd((float)(Settings->wifi_output_power) / 10, 1, stemp1);
-  } else {
-    dtostrfd((float)(Wifi.last_tx_pwr) / 10, 0, stemp1);  // No decimal to indicate dynamic tx power
+    Wifi.last_tx_pwr = Settings->wifi_output_power;
   }
-  return String(stemp1);
+  return (float)(Wifi.last_tx_pwr) / 10;
 }
 
 void WifiSetOutputPower(void) {
@@ -1268,7 +1265,7 @@ bool WifiHostByName(const char* aHostname, IPAddress& aResult) {
   if (success) {
     // Host name resolved
     if (0xFFFFFFFF != (uint32_t)aResult) {
-      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI "DNS resolved '%s' (%s) in %i ms"), aHostname, aResult.toString().c_str(), dns_end - dns_start);
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_WIFI "DNS resolved '%s' (%s) in %i ms"), aHostname, aResult.toString().c_str(), dns_end - dns_start);
       return true;
     }
   }
