@@ -12,6 +12,8 @@ All notable changes to this project will be documented in this file.
 - Matter add support for Contact Sensor
 - Berry `string.format()` now automatically converts type according to format
 - Matter add friendly-name (NodeLabel) to each endpoint
+- Berry add global function `format` as a simpler syntax to `string.format`
+- Berry added f-strings as an alternative to string formatting
 
 ### Breaking Changed
 
@@ -26,6 +28,7 @@ All notable changes to this project will be documented in this file.
 - Matter fix local Occupancy sensor
 - Zigbee fixed regression with SetOption101
 - Berry fixed parser error with upvals in closures
+- NeoPool fix NPFiltration switch result (#18871)
 
 ### Removed
 
