@@ -41,7 +41,7 @@ static const char* const kwords_tab[] = {
     "for", "def", "end", "class", "break", "continue",
     "return", "true", "false", "nil", "var", "do",
     "import", "as", "try", "except", "raise", "static",
-    // ".f"
+    ":=",
 };
 
 void be_lexerror(blexer *lexer, const char *msg)
@@ -752,7 +752,9 @@ static btokentype lexer_next(blexer *lexer)
         case '}': next(lexer); return OptRBR;
         case ',': next(lexer); return OptComma;
         case ';': next(lexer); return OptSemic;
-        case ':': next(lexer); return OptColon;
+        case ':':
+            next(lexer);
+            return check_next(lexer, '=') ? OptWalrus : OptColon;
         case '?': next(lexer); return OptQuestion;
         case '^': return scan_assign(lexer, OptXorAssign, OptBitXor);
         case '~': next(lexer); return OptFlip;

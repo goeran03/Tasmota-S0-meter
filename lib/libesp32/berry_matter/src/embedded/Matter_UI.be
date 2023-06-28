@@ -197,6 +197,8 @@ class Matter_UI
     webserver.content_send(f"<input type='number' min='0' max='4095' name='discriminator' value='{self.device.root_discriminator:i}'>")
     var ipv4only_checked = self.device.ipv4only ? " checked" : ""
     webserver.content_send(f"<p><input type='checkbox' name='ipv4'{ipv4only_checked}>IPv4 only</p>")
+    var disable_bridge_mode_checked = self.device.disable_bridge_mode ? " checked" : ""
+    webserver.content_send(f"<p><input type='checkbox' name='nobridge'{disable_bridge_mode_checked}>Disable bridge mode (not recommended)</p>")
     webserver.content_send("<p></p><button name='passcode' class='button bgrn'>Change</button></form></p>"
                            "<p></p></fieldset><p></p>")
 
@@ -366,7 +368,8 @@ class Matter_UI
     for remote: remotes
 
       var remote_html = webserver.html_escape(remote)
-      webserver.content_send(f"&#x1F517; <a target='_blank' href=\"http://{remote_html}/?\">{remote_html}</a>")
+      var host_device_name = webserver.html_escape( self.device.get_plugin_remote_info(remote).find('name', remote) )
+      webserver.content_send(f"&#x1F517; <a target='_blank' title='http://{remote_html}/' href=\"http://{remote_html}/?\">{host_device_name}</a>")
       webserver.content_send("<table style='width:100%'>")
       webserver.content_send("<tr>"
                              "<td width='25'></td>"
@@ -617,7 +620,7 @@ class Matter_UI
 
     if url == ''  return end
     var timeout = matter.Plugin_Bridge_HTTP.PROBE_TIMEOUT
-    var http_remote = matter.HTTP_remote(url, timeout)
+    var http_remote = matter.HTTP_remote(nil, url, timeout)
     # Status 8
     var status8 = http_remote.call_sync('Status 8', timeout)
     if status8 != nil   status8 = json.load(status8)                end
@@ -640,7 +643,8 @@ class Matter_UI
       webserver.content_send("<fieldset><legend><b>&nbsp;Matter Remote Device&nbsp;</b></legend><p></p>"
                              "<p><b>Add Remote sensor or device</b></p>")
 
-      webserver.content_send(format("<p>&#x1F517; <a target='_blank' href=\"http://%s/?\">%s</a></p>", webserver.html_escape(url), webserver.html_escape(url)))
+      var remote_html = webserver.html_escape(url)
+      webserver.content_send(f"<p>&#x1F517; <a target='_blank' href=\"http://{remote_html}/?\">{remote_html}</a></p>")
 
       # Add new endpoint section
       webserver.content_send("<form action='/matterc' method='post'>"
@@ -753,6 +757,7 @@ class Matter_UI
           self.device.root_discriminator = int(webserver.arg("discriminator"))
         end
         self.device.ipv4only = webserver.arg("ipv4") == 'on'
+        self.device.disable_bridge_mode = webserver.arg("nobridge") == 'on'
         self.device.save_param()
 
         #- and force restart -#
@@ -1028,7 +1033,8 @@ class Matter_UI
 
     for host: self.device.k2l(bridge_plugin_by_host)
       var host_html = webserver.html_escape(host)
-      webserver.content_send(format("<tr class='ztdm htrm'><td>&#x1F517; <a target='_blank' title='http://%s/' href=\"http://%s/?\"'>%s</a></td>", host_html, host_html, host_html))
+      var host_device_name = webserver.html_escape( self.device.get_plugin_remote_info(host).find('name', host) )
+      webserver.content_send(f"<tr class='ztdm htrm'><td>&#x1F517; <a target='_blank' title='http://{host_html}/' href=\"http://{host_html}/?\"'>{host_device_name}</a></td>")
       var http_remote = bridge_plugin_by_host[host][0].http_remote    # get the http_remote object from the first in list
       webserver.content_send(http_remote.web_last_seen())
 

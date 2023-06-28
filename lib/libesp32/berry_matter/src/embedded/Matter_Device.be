@@ -33,6 +33,7 @@ class Matter_Device
   var plugins_persist                 # true if plugins configuration needs to be saved
   var plugins_classes                 # map of registered classes by type name
   var plugins_config                  # map of JSON configuration for plugins
+  var plugins_config_remotes          # map of information on each remote under "remotes" key, '{}' when empty
   var udp_server                      # `matter.UDPServer()` object
   var message_handler                 # `matter.MessageHandler()` object
   var sessions                        # `matter.Session_Store()` objet
@@ -57,11 +58,12 @@ class Matter_Device
   var mdns_pase_eth                   # do we have an active PASE mDNS announce for eth
   var mdns_pase_wifi                  # do we have an active PASE mDNS announce for wifi
   # for brige mode, list of HTTP_remote objects (only one instance per remote object)
-  var http_remotes                    # map of 'domain:port' or `nil` if no bridge
+  var http_remotes                    # map of 'domain:port' to `Matter_HTTP_remote` instance or `nil` if no bridges
   # saved in parameters
   var root_discriminator              # as `int`
   var root_passcode                   # as `int`
   var ipv4only                        # advertize only IPv4 addresses (no IPv6)
+  var disable_bridge_mode             # default is bridge mode, this flag disables this mode for some non-compliant controllers
   var next_ep                         # next endpoint to be allocated for bridge, start at 1
   # context for PBKDF
   var root_iterations                 # PBKDF number of iterations
@@ -83,6 +85,7 @@ class Matter_Device
     self.plugins = []
     self.plugins_persist = false                  # plugins need to saved only when the first fabric is associated
     self.plugins_classes = {}
+    self.plugins_config_remotes = {}
     self.register_native_classes()                # register all native classes
     self.vendorid = self.VENDOR_ID
     self.productid = self.PRODUCT_ID
@@ -90,6 +93,7 @@ class Matter_Device
     self.next_ep = 1                              # start at endpoint 1 for dynamically allocated endpoints
     self.root_salt = crypto.random(16)
     self.ipv4only = false
+    self.disable_bridge_mode = false
     self.load_param()
 
     self.sessions = matter.Session_Store(self)
@@ -624,10 +628,16 @@ class Matter_Device
   # 
   def save_param()
     import json
-    var j = format('{"distinguish":%i,"passcode":%i,"ipv4only":%s,"nextep":%i', self.root_discriminator, self.root_passcode, self.ipv4only ? 'true':'false', self.next_ep)
+    self.update_remotes_info()    # update self.plugins_config_remotes
+
+    var j = format('{"distinguish":%i,"passcode":%i,"ipv4only":%s,"disable_bridge_mode":%s,"nextep":%i', self.root_discriminator, self.root_passcode, self.ipv4only ? 'true':'false', self.disable_bridge_mode ? 'true':'false', self.next_ep)
     if self.plugins_persist
       j += ',"config":'
       j += json.dump(self.plugins_config)
+      if size(self.plugins_config_remotes) > 0
+        j += ',"remotes":'
+        j += json.dump(self.plugins_config_remotes)
+      end
     end
     j += '}'
     try
@@ -640,6 +650,34 @@ class Matter_Device
       tasmota.log("MTR: Session_Store::save Exception:" + str(e) + "|" + str(m), 2)
       return j
     end
+  end
+
+  #############################################################
+  # Get remote info by url
+  #
+  # Return a map, potentially empty
+  def get_plugin_remote_info(url)
+    return self.plugins_config_remotes.find(url, {})
+  end
+    
+  #############################################################
+  # update back all remote information from actual remotes
+  #
+  # returns a map or `nil` if no information
+  # also stores in `self.plugins_config_remotes`
+  def update_remotes_info()
+    var ret = {}
+    if self.http_remotes != nil
+      for url:self.http_remotes.keys()
+        var info = self.http_remotes[url].get_info()
+        if info != nil && size(info) > 0
+          ret[url] = info
+        end
+      end
+    end
+
+    self.plugins_config_remotes = ret
+    return ret
   end
 
   #############################################################
@@ -657,12 +695,17 @@ class Matter_Device
       self.root_discriminator = j.find("distinguish", self.root_discriminator)
       self.root_passcode = j.find("passcode", self.root_passcode)
       self.ipv4only = bool(j.find("ipv4only", false))
+      self.disable_bridge_mode = bool(j.find("disable_bridge_mode", false))
       self.next_ep = j.find("nextep", self.next_ep)
       self.plugins_config = j.find("config")
       if self.plugins_config != nil
         tasmota.log("MTR: load_config = " + str(self.plugins_config), 3)
         self.adjust_next_ep()
         self.plugins_persist = true
+      end
+      self.plugins_config_remotes = j.find("remotes", {})
+      if self.plugins_config_remotes
+        tasmota.log("MTR: load_remotes = " + str(self.plugins_config_remotes), 3)
       end
     except .. as e, m
       if e != "io_error"
@@ -1011,6 +1054,7 @@ class Matter_Device
 
     if !self.plugins_persist
       self.plugins_config = self.autoconf_device_map()
+      self.plugins_config_remotes = {}
       self.adjust_next_ep()
       tasmota.log("MTR: autoconfig = " + str(self.plugins_config), 3)
     end
@@ -1210,7 +1254,7 @@ class Matter_Device
         self.register_plugin_class(v)
       end
     end
-    tasmota.log("MTR: registered classes "+str(self.k2l(self.plugins_classes)), 3)
+    # tasmota.log("MTR: registered classes "+str(self.k2l(self.plugins_classes)), 3)
   end
   
   #############################################################
@@ -1357,7 +1401,10 @@ class Matter_Device
         http_remote.set_timeout(timeout)          # reduce timeout if new value is shorter
       end
     else
-      http_remote = matter.HTTP_remote(addr, timeout)
+      http_remote = matter.HTTP_remote(self, addr, timeout)
+      if self.plugins_config_remotes.contains(addr)
+        http_remote.set_info(self.plugins_config_remotes[addr])
+      end
       self.http_remotes[addr] = http_remote
     end
     return http_remote
