@@ -3,22 +3,64 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [13.0.0.1]
+## [13.0.0.3]
 ### Added
-- Command ``Delay -1`` to wait until next second (#18984)
-- Matter add option to disable bridge mode
+- Support for MAX17043 fuel-gauge systems Lipo batteries (#18788)
 
 ### Breaking Changed
-- Berry `bool( [] )` and `bool( {} )` now evaluate as `false` (#18986)
 
 ### Changed
-- Matter support for temperature in Fahrenheit (`SetOption8 1`) (#18987)
+- Initial ``DisplayMode`` from 1 to 0 and ``DisplayDimmmer`` from 10% to 50% (#19138)
 
 ### Fixed
-- Berry various fixes for Walrus Operator (#18982)
+- Initial battery level percentage (#19160)
 
 ### Removed
 
+## [13.0.0.2] 20230721
+### Added
+- Partition Wizard is now able to convert to safeboot from Shelly partition layout (#19034)
+- Matter mini-profiler (#19075)
+- Berry `_class` can be used in `static var` initialization code (#19088)
+- Berry `energy.update_total()` to call `EnergyUpdateTotal()` from energy driver (#19117)
+- Support for DeepSleep battery level percentage (#19134)
+- Berry metrics for memory allocation/deallocation/reallocation (#19150)
+- Berry `tasmota.loglevel()` and `tasmota.rtc_utc()` for faster performance (#19152)
+- Berry AES CCM decrypting in a single call to avoid any object allocation (#19153)
+
+### Changed
+- ESP32 shutter driver support up to 16 shutters (#18295)
+- Configuration backup and restore now backup and restore ``.xdrvsetXXX`` files too (#18295)
+- Berry extend `range(lower, upper, incr)` to arbitrary increment (#19120)
+- Berry updated syntax highlighting plugin for VSCode (#19123)
+- Matter latency improvement for single attribute reads and single commands (#19158)
+
+## [13.0.0.1] 20230708
+### Added
+- Command ``Delay -1`` to wait until next second (#18984)
+- Matter add option to disable bridge mode (#18992)
+- Support for SGP41 TVOC/NOx Sensor (#18880)
+- Command ``BrRestart`` to restart the Berry VM (experimental) (#19003)
+- Command ``Restart 9`` to save all changes and go into deepsleep waiting for a reset (#19024)
+- Berry added `getgbl` performance counter to `debug.counters()` (#19070)
+
+### Breaking Changed
+- Berry `bool( [] )` and `bool( {} )` now evaluate as `false` (#18986)
+- Berry `import strict` now detects useless expr without side effects (#18997)
+
+### Changed
+- Matter support for temperature in Fahrenheit (`SetOption8 1`) (#18987)
+- Matter improve responsiveness (#19002)
+- ESP32 LVGL library from v8.3.7 to v8.3.8 (no functional change)
+- Matter improve latency for remote commands (#19072)
+
+### Fixed
+- Berry various fixes for Walrus Operator (#18982)
+- MiElHVAC power commands regression from v12.4.0.1 (#18923)
+- `BrRestart` now supports web handlers to work after Berry restart
+
+### Removed
+- Support for ESP32-C3 with chip rev below 3 (old development boards)
 
 ## [Released]
 

@@ -238,6 +238,7 @@
 #define D_JSON_MY "YaxisInduction"
 #define D_JSON_MZ "ZaxisInduction"
 #define D_JSON_MAGNETICFLD "MagneticInduction"
+#define D_JSON_BATTPERCENT "BatteryPercentage"
 #define D_RSLT_ENERGY "ENERGY"
 #define D_RSLT_HASS_STATE "HASS_STATE"
 #define D_RSLT_INFO "INFO"
@@ -764,6 +765,7 @@
 // Commands xdrv_52_berry.ino - Berry scripting language
 #define D_PRFX_BR "Br"
 #define D_CMND_BR_RUN ""
+#define D_CMND_BR_RESTART "Restart"
 #define D_BR_NOT_STARTED  "Berry not started"
 
 // Commands xdrv_60_shift595.ino - 74x595 family shift register driver
