@@ -200,13 +200,15 @@ void CmndWifiTest(void)
         if (0 == XdrvMailbox.index) { Wifi.wifi_Test_Restart = true; }      // If WifiTest is successful, save data on SSID1 and restart
         if (2 == XdrvMailbox.index) { Wifi.wifi_Test_Save_SSID2 = true; }   // If WifiTest is successful, save data on SSID2
 
-        SettingsUpdateText(Wifi.wifi_Test_Save_SSID2 ? SET_STASSID2 : SET_STASSID1, ssid_test);
-        SettingsUpdateText(Wifi.wifi_Test_Save_SSID2 ? SET_STAPWD2 : SET_STAPWD1, pswd_test);
+        if (3 != XdrvMailbox.index) {                                       // WifiTest3 never ever makes anything persistent, thus works without webserver
+          SettingsUpdateText(Wifi.wifi_Test_Save_SSID2 ? SET_STASSID2 : SET_STASSID1, ssid_test);
+          SettingsUpdateText(Wifi.wifi_Test_Save_SSID2 ? SET_STAPWD2 : SET_STAPWD1, pswd_test);
+        }
 
         AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECTING_TO_AP " %s " D_AS " %s ..."),
-          SettingsText(Wifi.wifi_Test_Save_SSID2 ? SET_STASSID2 : SET_STASSID1), TasmotaGlobal.hostname);
+          ssid_test, TasmotaGlobal.hostname);
 
-        WiFi.begin(SettingsText(Wifi.wifi_Test_Save_SSID2 ? SET_STASSID2 : SET_STASSID1), SettingsText(Wifi.wifi_Test_Save_SSID2 ? SET_STAPWD2 : SET_STAPWD1));
+        WiFi.begin(ssid_test,pswd_test);
       }
     } else {
       ResponseCmndChar(D_JSON_BUSY);
@@ -827,7 +829,7 @@ void CmndStatus(void)
 #endif  // ESP32
                           D_JSON_PROGRAMFLASHSIZE "\":%d,\"" D_JSON_FLASHSIZE "\":%d"
                           ",\"" D_JSON_FLASHCHIPID "\":\"%06X\""
-                          ",\"FlashFrequency\":%d,\"" D_JSON_FLASHMODE "\":\"%s\""),
+                          ",\"FlashFrequency\":%d,\"" D_JSON_FLASHMODE "\":\"" D_TASMOTA_FLASHMODE "\""),
                           ESP_getSketchSize()/1024, ESP_getFreeSketchSpace()/1024, ESP_getFreeHeap1024(),
 #ifdef ESP32
                           uxTaskGetStackHighWaterMark(nullptr) / 1024, ESP.getPsramSize()/1024, ESP.getFreePsram()/1024,
@@ -837,7 +839,7 @@ void CmndStatus(void)
                           ESP_getFlashChipSize()/1024, ESP.getFlashChipRealSize()/1024
 #endif // ESP8266
                           , ESP_getFlashChipId()
-                          , ESP.getFlashChipSpeed()/1000000, ESP_getFlashChipMode().c_str());
+                          , ESP.getFlashChipSpeed()/1000000);
     ResponseAppendFeatures();
     XsnsDriverState();
     ResponseAppend_P(PSTR(",\"Sensors\":"));
@@ -1844,11 +1846,19 @@ void CmndTemplate(void)
       SettingsUpdateText(SET_TEMPLATE_NAME, PSTR("Merged"));
       uint32_t j = 0;
       for (uint32_t i = 0; i < nitems(Settings->user_template.gp.io); i++) {
-#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32C3
-#else
+#ifdef ESP8266
         if (6 == i) { j = 9; }
         if (8 == i) { j = 12; }
-#endif
+#endif  // ESP8266
+#ifdef ESP32
+#if CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6
+        // No change
+#elif CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
+//        if (22 == i) { j = 33; }  // TODO 20230821 verify
+#else  // ESP32
+//        if (28 == i) { j = 32; }  // TODO 20230821 verify
+#endif  // Non plain ESP32
+#endif  // ESP32
         if (TasmotaGlobal.my_module.io[j] > GPIO_NONE) {
           Settings->user_template.gp.io[i] = TasmotaGlobal.my_module.io[j];
         }

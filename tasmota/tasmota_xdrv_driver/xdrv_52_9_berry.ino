@@ -64,10 +64,10 @@ void checkBeTop(void) {
  * Use PSRAM if available
 \*********************************************************************************************/
 extern "C" {
-  void *berry_malloc(uint32_t size);
+  void *berry_malloc(size_t size);
   void *berry_realloc(void *ptr, size_t size);
 #ifdef USE_BERRY_PSRAM
-  void *berry_malloc(uint32_t size) {
+  void *berry_malloc(size_t size) {
     return special_malloc(size);
   }
   void *berry_realloc(void *ptr, size_t size) {
@@ -77,7 +77,7 @@ extern "C" {
     return special_calloc(num, size);
   }
 #else
-  void *berry_malloc(uint32_t size) {
+  void *berry_malloc(size_t size) {
     return malloc(size);
   }
   void *berry_realloc(void *ptr, size_t size) {
@@ -89,7 +89,7 @@ extern "C" {
 #endif // USE_BERRY_PSRAM
 
 
-  void *berry_malloc32(uint32_t size) {
+  void *berry_malloc32(size_t size) {
   #ifdef USE_BERRY_IRAM
     return special_malloc32(size);
   #else
@@ -169,11 +169,20 @@ int32_t callBerryEventDispatcher(const char *type, const char *cmd, int32_t idx,
 }
 
 // Simplified version of event loop. Just call `tasmota.fast_loop()`
-void callBerryFastLoop(void) {
+// `every_5ms` is a flag to wait at least 5ms between calss to `tasmota.fast_loop()`
+void callBerryFastLoop(bool every_5ms) {
+  static uint32_t fast_loop_last_call = 0;
   bvm *vm = berry.vm;
 
   if (nullptr == vm) { return; }
 
+  uint32_t now = millis();
+  if (every_5ms) {
+    if (!TimeReached(fast_loop_last_call + USE_BERRY_FAST_LOOP_SLEEP_MS /* 5ms */)) { return; }
+  }
+  fast_loop_last_call = now;
+
+  // TODO - can we make this dereferencing once for all?
   if (be_getglobal(vm, "tasmota")) {
     if (be_getmethod(vm, -1, "fast_loop")) {
       be_pushvalue(vm, -2); // add instance as first arg
@@ -758,6 +767,11 @@ bool Xdrv52(uint32_t function)
   bool result = false;
 
   switch (function) {
+    case FUNC_SLEEP_LOOP:
+      if (TasmotaGlobal.berry_fast_loop_enabled) {    // call only if enabled at global level
+        callBerryFastLoop(true);      // call `tasmota.fast_loop()` optimized for minimal performance impact
+      }
+      break;
     case FUNC_LOOP:
       if (!berry.autoexec_done) {
         // we generate a synthetic event `autoexec`
@@ -779,7 +793,7 @@ bool Xdrv52(uint32_t function)
         }
       }
       if (TasmotaGlobal.berry_fast_loop_enabled) {    // call only if enabled at global level
-        callBerryFastLoop();      // call `tasmota.fast_loop()` optimized for minimal performance impact
+        callBerryFastLoop(false);      // call `tasmota.fast_loop()` optimized for minimal performance impact
       }
       break;
 

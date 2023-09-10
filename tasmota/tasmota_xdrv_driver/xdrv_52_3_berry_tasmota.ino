@@ -395,7 +395,18 @@ extern "C" {
   //
   int32_t l_scaleuint(struct bvm *vm);
   int32_t l_scaleuint(struct bvm *vm) {
-    return be_call_c_func(vm, (void*) &changeUIntScale, "i", "-iiiii");
+    int32_t top = be_top(vm); // Get the number of arguments
+    if (top == 5 && be_isint(vm, 1) && be_isint(vm, 2) && be_isint(vm, 3) && be_isint(vm, 4) && be_isint(vm, 5)) {
+      int32_t val = be_toint(vm, 1);
+      int32_t from_min = be_toint(vm, 2);
+      int32_t from_max = be_toint(vm, 3);
+      int32_t to_min = be_toint(vm, 4);
+      int32_t to_max = be_toint(vm, 5);
+      int32_t scaled = changeUIntScale(val, from_min, from_max, to_min, to_max);
+      be_pushint(vm, scaled);
+      be_return(vm);
+    }
+    be_raise(vm, kTypeError, nullptr);
   }
 
   int32_t l_respCmnd(bvm *vm);
@@ -895,24 +906,25 @@ extern "C" {
  * Tasmota Log Reader
  *
 \*********************************************************************************************/
-
-uint32_t* tlr_init(void) {
-  uint32_t* idx = new uint32_t();
-  *idx = 0;
-  return idx;
-}
-char* tlr_get_log(uint32_t* idx, int32_t log_level) {
-  // bool GetLog(uint32_t req_loglevel, uint32_t* index_p, char** entry_pp, size_t* len_p) {
-  if (log_level < 0 || log_level > 4) { log_level = 2; }    // default to LOG_LEVEL_INFO
-  char* line;
-  size_t len;
-  if (GetLog(log_level, idx, &line, &len) && len > 0) {
-    char* s = (char*) malloc(len+1);
-    memmove(s, line, len);
-    s[len] = 0;
-    return s;   // caller will free()
-  } else {
-    return NULL;
+extern "C" {
+  uint32_t* tlr_init(void) {
+    uint32_t* idx = new uint32_t();
+    *idx = 0;
+    return idx;
+  }
+  char* tlr_get_log(uint32_t* idx, int32_t log_level) {
+    // bool GetLog(uint32_t req_loglevel, uint32_t* index_p, char** entry_pp, size_t* len_p) {
+    if (log_level < 0 || log_level > 4) { log_level = 2; }    // default to LOG_LEVEL_INFO
+    char* line;
+    size_t len;
+    if (GetLog(log_level, idx, &line, &len) && len > 0) {
+      char* s = (char*) malloc(len+1);
+      memmove(s, line, len);
+      s[len] = 0;
+      return s;   // caller will free()
+    } else {
+      return NULL;
+    }
   }
 }
 

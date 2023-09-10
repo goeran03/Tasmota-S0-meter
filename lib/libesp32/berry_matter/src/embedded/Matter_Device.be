@@ -176,18 +176,24 @@ class Matter_Device
 
   #####################################################################
   # Remove a fabric and clean all corresponding values and mDNS entries
-  def remove_fabric(fabric_parent)
-    var sub_fabrics = self.sessions.find_children_fabrics(fabric_parent.get_fabric_index())
-    if sub_fabrics == nil return end
-    for fabric_index : sub_fabrics
-      var fabric = self.sessions.find_fabric_by_index(fabric_index)
-      if fabric != nil
-        tasmota.log("MTR: removing fabric " + fabric.get_fabric_id().copy().reverse().tohex(), 2)
-        self.message_handler.im.subs_shop.remove_by_fabric(fabric)
-        self.mdns_remove_op_discovery(fabric)
-        self.sessions.remove_fabric(fabric)
-      end
+  def remove_fabric(fabric)
+    if fabric != nil
+      tasmota.log("MTR: removing fabric " + fabric.get_fabric_id().copy().reverse().tohex(), 2)
+      self.message_handler.im.subs_shop.remove_by_fabric(fabric)
+      self.mdns_remove_op_discovery(fabric)
+      self.sessions.remove_fabric(fabric)
     end
+    # var sub_fabrics = self.sessions.find_children_fabrics(fabric_parent.get_fabric_index())
+    # if sub_fabrics == nil return end
+    # for fabric_index : sub_fabrics
+    #   var fabric = self.sessions.find_fabric_by_index(fabric_index)
+    #   if fabric != nil
+    #     tasmota.log("MTR: removing fabric " + fabric.get_fabric_id().copy().reverse().tohex(), 2)
+    #     self.message_handler.im.subs_shop.remove_by_fabric(fabric)
+    #     self.mdns_remove_op_discovery(fabric)
+    #     self.sessions.remove_fabric(fabric)
+    #   end
+    # end
     self.sessions.save_fabrics()
   end
 
@@ -431,7 +437,7 @@ class Matter_Device
     var fabric = session.get_fabric()
     var fabric_id = fabric.get_fabric_id().copy().reverse().tohex()
     var vendor_name = fabric.get_admin_vendor_name()
-    tasmota.log(format("MTR: --- Commissioning complete for Fabric '%s' (Vendor %s) ---", fabric_id, vendor_name), 2)
+    tasmota.log(f"MTR: --- Commissioning complete for Fabric '{fabric_id}' (Vendor {vendor_name}) ---", 2)
     self.stop_basic_commissioning()     # by default close commissioning when it's complete
   end
 
@@ -651,6 +657,23 @@ class Matter_Device
     while idx < size(self.plugins)
       var pl = self.plugins[idx]
       if pl.get_endpoint() == ep
+        return pl
+      end
+      idx += 1
+    end
+    return nil
+  end
+
+  #############################################################
+  # Find plugin by endpoint
+  def find_plugin_by_friendly_name(name)
+    if (name == nil) || (size(name) == 0)   return nil      end     # invalid name
+
+    var idx = 0
+    while idx < size(self.plugins)
+      var pl = self.plugins[idx]
+      var pl_name = pl.get_name()
+      if (pl_name != nil) && (size(pl_name) > 0) && (pl_name == name)
         return pl
       end
       idx += 1
@@ -880,7 +903,7 @@ class Matter_Device
         # Add Hostname (based on MAC) with IPv4/IPv6 addresses
         var eth = tasmota.eth()
         self.hostname_eth  = string.replace(eth.find("mac"), ':', '')
-        if !self.ipv4only
+        if !self.ipv4only || !eth.contains('ip6local')
           # tasmota.log(format("MTR: calling mdns.add_hostname(%s, %s, %s)", self.hostname_eth, eth.find('ip6local',''), eth.find('ip','')), 4)
           mdns.add_hostname(self.hostname_eth, eth.find('ip6local',''), eth.find('ip',''), eth.find('ip6',''))
         else
@@ -890,11 +913,11 @@ class Matter_Device
       else
         var wifi = tasmota.wifi()
         self.hostname_wifi = string.replace(wifi.find("mac"), ':', '')
-        if !self.ipv4only
+        if !self.ipv4only || !wifi.contains('ip6local')
           # tasmota.log(format("MTR: calling mdns.add_hostname(%s, %s, %s)", self.hostname_wifi, wifi.find('ip6local',''), wifi.find('ip','')), 4)
           mdns.add_hostname(self.hostname_wifi, wifi.find('ip6local',''), wifi.find('ip',''), wifi.find('ip6',''))
         else
-          tasmota.log(format("MTR: calling mdns.add_hostname(%s, %s)", self.hostname_eth, wifi.find('ip','')), 3)
+          tasmota.log(format("MTR: calling mdns.add_hostname(%s, %s)", self.hostname_wifi, wifi.find('ip','')), 3)
           mdns.add_hostname(self.hostname_wifi, wifi.find('ip',''))
         end
       end
@@ -1146,13 +1169,13 @@ class Matter_Device
         if !r_st13.contains(k)   break     end           # no more SHTxxx
         var d = r_st13[k]
         tasmota.log(format("MTR: '%s' = %s", k, str(d)), 3)
-        var relay1 = d.find('Relay1', 0) - 1        # relay base 0 or -1 if none
-        var relay2 = d.find('Relay2', 0) - 1        # relay base 0 or -1 if none
+        var relay1 = d.find('Relay1', -1)           # relay base 1 or -1 if none
+        var relay2 = d.find('Relay2', -1)           # relay base 1 or -1 if none
 
-        if relay1 >= 0    relays_reserved.push(relay1)    end   # mark relay1/2 as non-relays
-        if relay2 >= 0    relays_reserved.push(relay2)    end
+        if relay1 > 0    relays_reserved.push(relay1 - 1)    end   # mark relay1/2 as non-relays
+        if relay2 > 0    relays_reserved.push(relay2 - 1)    end
 
-        tasmota.log(format("MTR: relay1 = %s, relay2 = %s", relay1, relay2), 3)
+        tasmota.log(f"MTR: {relay1=} {relay2=}", 3)
         # is there tilt support
         var tilt_array = d.find('TiltConfig')
         var tilt_config = tilt_array && (tilt_array[2] > 0)
@@ -1171,7 +1194,7 @@ class Matter_Device
 
     while relay_index < relay_count
       if relays_reserved.find(relay_index) == nil   # if relay is actual relay
-        m[str(endpoint)] = {'type':'relay','relay':relay_index}
+        m[str(endpoint)] = {'type':'relay','relay':relay_index + 1}     # Relay index start with 1
         endpoint += 1
       end
       relay_index += 1
@@ -1508,6 +1531,7 @@ class Matter_Device
   #
   def register_commands()
     tasmota.add_cmd("MtrJoin", /cmd_found, idx, payload, payload_json -> self.MtrJoin(cmd_found, idx, payload, payload_json))
+    tasmota.add_cmd("MtrUpdate", /cmd_found, idx, payload, payload_json -> self.MtrUpdate(cmd_found, idx, payload, payload_json))
   end
 
   #####################################################################
@@ -1525,7 +1549,51 @@ class Matter_Device
     tasmota.resp_cmnd_done()
   end
 
+  #####################################################################
+  # `MtrUpdate`
+  #
+  # MtrUpdate {"ep":1, "Power":1}
+  # MtrUpdate {"Name":"ep1", "Power":1}
+  # MtrUpdate {"Name":"My_virtual_light", "Power":1}
+  #
+  def MtrUpdate(cmd_found, idx, payload, payload_json)
+    if payload_json == nil    return tasmota.resp_cmnd("Invalid JSON")    end
 
+    var key_i
+    if (key_i := tasmota.find_key_i(payload_json, 'Device')) != nil
+      var pl = self.find_plugin_by_name_or_ep(payload[key_i])
+      if (pl == nil)          return tasmota.resp_cmnd("Invalid Device")    end
+      if (!pl.virtual)        return tasmota.resp_cmnd("Device is not virtual")    end
+      # find endpoint (plugin) by name
+      # can be:
+      #  - integer: endpoint number
+      #  - "ep<n>": endpoint number
+      #  - "<name>": friendly name for endpoint
+    end
+
+    tasmota.resp_cmnd_done()
+  end
+
+  #####################################################################
+  # find_plugin_by_name_or_ep
+  #
+  # `name`can be:
+  #  - integer: endpoint number
+  #  - "ep<n>": endpoint number
+  #  - "<name>": friendly name for endpoint
+  def find_plugin_by_name_or_ep(name)
+    if type(name) == 'int'
+      if (name > 0)     return self.find_plugin_by_endpoint(name)     end
+    elif type(name) == 'string'
+      if name[0..1] == "ep"
+        var ep_num = int(name[2..])
+        if ep_num > 0   return self.find_plugin_by_endpoint(ep_num)   end
+      else
+        return self.find_plugin_by_friendly_name(name)
+      end
+    end
+    return nil              # invalid type
+  end
 end
 matter.Device = Matter_Device
 

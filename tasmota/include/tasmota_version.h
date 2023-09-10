@@ -20,6 +20,6 @@
 #ifndef _TASMOTA_VERSION_H_
 #define _TASMOTA_VERSION_H_
 
-const uint32_t VERSION = 0x0D000003;   // 13.0.0.3
+const uint32_t VERSION = 0x0D010002;   // 13.1.0.2
 
 #endif  // _TASMOTA_VERSION_H_

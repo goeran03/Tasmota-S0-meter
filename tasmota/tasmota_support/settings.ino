@@ -189,6 +189,9 @@ bool RtcRebootValid(void) {
 
 extern "C" {
 #include "spi_flash.h"
+#if ESP_IDF_VERSION_MAJOR >= 5
+  #include "spi_flash_mmap.h"
+#endif
 }
 
 #ifdef ESP8266
@@ -533,13 +536,16 @@ bool SettingsConfigRestore(void) {
     valid_settings = (0 == settings_buffer[0xF36]);  // Settings->config_version
 #endif  // ESP8266
 #ifdef ESP32
-
-#ifdef CONFIG_IDF_TARGET_ESP32S3
+#if CONFIG_IDF_TARGET_ESP32S3
     valid_settings = (2 == settings_buffer[0xF36]);  // Settings->config_version ESP32S3
 #elif CONFIG_IDF_TARGET_ESP32S2
     valid_settings = (3 == settings_buffer[0xF36]);  // Settings->config_version ESP32S2
 #elif CONFIG_IDF_TARGET_ESP32C3
     valid_settings = (4 == settings_buffer[0xF36]);  // Settings->config_version ESP32C3
+#elif CONFIG_IDF_TARGET_ESP32C2
+    valid_settings = (5 == settings_buffer[0xF36]);  // Settings->config_version ESP32C2
+#elif CONFIG_IDF_TARGET_ESP32C6
+    valid_settings = (6 == settings_buffer[0xF36]);  // Settings->config_version ESP32C6
 #else
     valid_settings = (1 == settings_buffer[0xF36]);  // Settings->config_version ESP32 all other
 #endif  // CONFIG_IDF_TARGET_ESP32S3
@@ -953,12 +959,16 @@ void SettingsDefaultSet2(void) {
 //  Settings->config_version = 0;  // ESP8266 (Has been 0 for long time)
 #endif  // ESP8266
 #ifdef ESP32
-#ifdef CONFIG_IDF_TARGET_ESP32S3
+#if CONFIG_IDF_TARGET_ESP32S3
   Settings->config_version = 2;  // ESP32S3
 #elif CONFIG_IDF_TARGET_ESP32S2
   Settings->config_version = 3;  // ESP32S2
 #elif CONFIG_IDF_TARGET_ESP32C3
   Settings->config_version = 4;  // ESP32C3
+#elif CONFIG_IDF_TARGET_ESP32C2
+  Settings->config_version = 5;  // ESP32C2
+#elif CONFIG_IDF_TARGET_ESP32C6
+  Settings->config_version = 6;  // ESP32C6
 #else
   Settings->config_version = 1;  // ESP32
 #endif  // CONFIG_IDF_TARGET_ESP32S3
@@ -1517,12 +1527,16 @@ void SettingsDelta(void) {
       Settings->config_version = 0;  // ESP8266 (Has been 0 for long time)
 #endif  // ESP8266
 #ifdef ESP32
-#ifdef CONFIG_IDF_TARGET_ESP32S3
+#if CONFIG_IDF_TARGET_ESP32S3
       Settings->config_version = 2;  // ESP32S3
 #elif CONFIG_IDF_TARGET_ESP32S2
       Settings->config_version = 3;  // ESP32S2
 #elif CONFIG_IDF_TARGET_ESP32C3
       Settings->config_version = 4;  // ESP32C3
+#elif CONFIG_IDF_TARGET_ESP32C2
+      Settings->config_version = 5;  // ESP32C2
+#elif CONFIG_IDF_TARGET_ESP32C6
+      Settings->config_version = 6;  // ESP32C6
 #else
       Settings->config_version = 1;  // ESP32
 #endif  // CONFIG_IDF_TARGET_ESP32S3
@@ -1717,7 +1731,7 @@ void SettingsDelta(void) {
       Settings->energy_current_calibration2 = Settings->energy_current_calibration;
     }
     if (Settings->version < 0x0C020005) {  // 12.2.0.5
-      Settings->modbus_sbaudrate = Settings->ex_modbus_sbaudrate;
+      Settings->modbus_sbaudrate = Settings->hdmi_cec_device_type;  // was ex_modbus_sbaudrate
       Settings->param[P_SERIAL_SKIP] = 0;
     }
     if (Settings->version < 0x0C030102) {  // 12.3.1.2

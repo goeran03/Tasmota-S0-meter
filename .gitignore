@@ -17,6 +17,7 @@
 .cache
 data
 unpacked_fs
+unpacked_boards
 tasmota/user_config_override.h
 build
 build_output/*
@@ -26,6 +27,7 @@ tasmota/tasmota.ino.cpp
 platformio_override.ini
 platformio_tasmota_cenv.ini
 platformio_tasmota_user_env.ini
+platformio_tasmota_core3_env.ini
 lib/libesp32/berry/generate/*
 lib/libesp32/berry/berry
 
