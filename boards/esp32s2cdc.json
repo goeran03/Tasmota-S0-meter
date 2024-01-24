@@ -28,7 +28,7 @@
       "flash_extra_images": [
         [
           "0x10000",
-          "variants/tasmota/tasmota32s2cdc-safeboot.bin"
+          "tasmota32s2cdc-safeboot.bin"
         ]
       ]
     },
@@ -37,8 +37,10 @@
     "maximum_size": 4194304,
     "require_upload_port": true,
     "before_reset": "usb_reset",
-    "after_reset": "no_reset",
-    "speed": 460800
+    "speed": 2000000
+  },
+  "download": {
+    "speed": 2000000
   },
   "url": "https://docs.espressif.com/projects/esp-idf/en/latest/esp32s2/hw-reference/esp32s2/user-guide-saola-1-v1.2.html",
   "vendor": "Espressif"

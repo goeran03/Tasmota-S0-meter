@@ -91,11 +91,21 @@
 #endif  // ESP32
 #endif  // USE_UFILESYS
 
+#if ESP_IDF_VERSION_MAJOR >= 5
+#include "include/tasconsole.h"
+#if SOC_USB_SERIAL_JTAG_SUPPORTED
+#include "hal/usb_serial_jtag_ll.h"
+#include "esp_private/rtc_clk.h"
+#endif  // SOC_USB_SERIAL_JTAG_SUPPORTED
+#endif  // ESP_IDF_VERSION_MAJOr
+
 // Structs
 #include "include/tasmota_types.h"
 
 #ifdef CONFIG_IDF_TARGET_ESP32
+#include "driver/gpio.h"
 #include "soc/efuse_reg.h"
+#include "bootloader_common.h"
 #endif
 
 /*********************************************************************************************\
@@ -198,6 +208,47 @@ struct XDRVMAILBOX {
 WiFiUDP PortUdp;                            // UDP Syslog and Alexa
 
 #ifdef ESP32
+#if ESP_IDF_VERSION_MAJOR >= 5
+
+/*
+#if CONFIG_IDF_TARGET_ESP32C3 ||            // support USB via HWCDC using JTAG interface
+    CONFIG_IDF_TARGET_ESP32C6 ||            // support USB via HWCDC using JTAG interface
+    CONFIG_IDF_TARGET_ESP32S2 ||            // support USB via USBCDC
+    CONFIG_IDF_TARGET_ESP32S3               // support USB via HWCDC using JTAG interface or USBCDC
+*/
+#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
+
+//#if CONFIG_TINYUSB_CDC_ENABLED              // This define is not recognized here so use USE_USB_CDC_CONSOLE
+#ifdef USE_USB_CDC_CONSOLE
+//#warning **** TasConsole use USB ****
+bool tasconsole_serial = false;
+
+#if ARDUINO_USB_MODE
+//#warning **** TasConsole ARDUINO_USB_MODE ****
+//HWCDC HWCDCSerial;                        // Already defined in HWCDC.cpp
+TASCONSOLE TasConsole{HWCDCSerial};         // ESP32C3/C6/S3 embedded USB using JTAG interface
+//#warning **** TasConsole uses HWCDC ****
+#else   // No ARDUINO_USB_MODE
+#include "USB.h"
+#include "USBCDC.h"
+//USBCDC USBSerial;                         // Already defined in USBCDC.cpp
+TASCONSOLE TasConsole{USBSerial};           // ESP32Sx embedded USB interface
+//#warning **** TasConsole uses USBCDC ****
+#endif  // ARDUINO_USB_MODE
+
+#else  // No USE_USB_CDC_CONSOLE
+TASCONSOLE TasConsole{Serial};
+bool tasconsole_serial = true;
+//#warning **** TasConsole uses Serial ****
+#endif  // USE_USB_CDC_CONSOLE
+#else   // No ESP32C3, S2 or S3
+TASCONSOLE TasConsole{Serial};
+bool tasconsole_serial = true;
+//#warning **** TasConsole uses Serial ****
+#endif  // ESP32C3, S2 or S3
+
+#else  // ESP_IDF_VERSION_MAJOR < 5
+
 /*
 #if CONFIG_IDF_TARGET_ESP32C3 ||            // support USB via HWCDC using JTAG interface
     CONFIG_IDF_TARGET_ESP32C6 ||            // support USB via HWCDC using JTAG interface
@@ -234,6 +285,8 @@ HardwareSerial TasConsole = Serial;         // Fallback serial interface for non
 bool tasconsole_serial = true;
 //#warning **** TasConsole uses Serial ****
 #endif  // ESP32C3, S2 or S3
+
+#endif  // ESP_IDF_VERSION_MAJOR >= 5
 
 #else   // No ESP32
 HardwareSerial TasConsole = Serial;         // Only serial interface
@@ -355,12 +408,6 @@ struct TasmotaGlobal_t {
   uint8_t pwm_dimmer_led_bri;               // Adjusted brightness LED level
 #endif  // USE_PWM_DIMMER
 
-#ifndef SUPPORT_IF_STATEMENT
-  uint8_t backlog_index;                    // Command backlog index
-  uint8_t backlog_pointer;                  // Command backlog pointer
-  String backlog[MAX_BACKLOG];              // Command backlog buffer
-#endif
-
 #ifdef MQTT_DATA_STRING
   String mqtt_data;                         // Buffer filled by Response functions
 #else
@@ -381,19 +428,14 @@ struct TasmotaGlobal_t {
 #endif  // PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM48_SECHEAP_SHARED
 
 #ifdef USE_BERRY
-  bool berry_fast_loop_enabled = false;           // is Berry fast loop enabled, i.e. control is passed at each loop iteration
+  bool berry_fast_loop_enabled = false;     // is Berry fast loop enabled, i.e. control is passed at each loop iteration
 #endif // USE_BERRY
 } TasmotaGlobal;
 
 TSettings* Settings = nullptr;
 
-#ifdef SUPPORT_IF_STATEMENT
-  #include <LinkedList.h>
-  LinkedList<String> backlog;               // Command backlog implemented with LinkedList
-  #define BACKLOG_EMPTY (backlog.size() == 0)
-#else
-  #define BACKLOG_EMPTY (TasmotaGlobal.backlog_pointer == TasmotaGlobal.backlog_index)
-#endif
+LList<char*> backlog;                       // Command backlog implemented with TasmotaLList
+#define BACKLOG_EMPTY (backlog.isEmpty())
 
 /*********************************************************************************************\
  * Main
@@ -402,22 +444,26 @@ TSettings* Settings = nullptr;
 void setup(void) {
 #ifdef ESP32
 #ifdef CONFIG_IDF_TARGET_ESP32
+
 #ifdef DISABLE_ESP32_BROWNOUT
   DisableBrownout();      // Workaround possible weak LDO resulting in brownout detection during Wifi connection
 #endif  // DISABLE_ESP32_BROWNOUT
 
   // restore GPIO16/17 if no PSRAM is found
-  #if ESP_IDF_VERSION_MAJOR < 5       // TODO for esp-idf 5
   if (!FoundPSRAM()) {
     // test if the CPU is not pico
+#if (ESP_IDF_VERSION_MAJOR >= 5)
+    uint32_t pkg_version = bootloader_common_get_chip_ver_pkg();
+    if (pkg_version <= 3) {   // D0WD, S0WD, D2WD
+#else // ESP_IDF_VERSION_MAJOR >= 5
     uint32_t chip_ver = REG_GET_FIELD(EFUSE_BLK0_RDATA3_REG, EFUSE_RD_CHIP_VER_PKG);
     uint32_t pkg_version = chip_ver & 0x7;
     if (pkg_version <= 3) {   // D0WD, S0WD, D2WD
+#endif // ESP_IDF_VERSION_MAJOR >= 5
       gpio_reset_pin(GPIO_NUM_16);
       gpio_reset_pin(GPIO_NUM_17);
     }
   }
-  #endif
 #endif  // CONFIG_IDF_TARGET_ESP32
 #endif  // ESP32
 
@@ -478,11 +524,66 @@ void setup(void) {
     Settings = (TSettings*)malloc(sizeof(TSettings));
   }
 
+#ifdef ESP32
+#if ESP_IDF_VERSION_MAJOR >= 5
+
+#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
+#ifdef USE_USB_CDC_CONSOLE
+
+  bool is_connected_to_USB = false;
+#if SOC_USB_SERIAL_JTAG_SUPPORTED  // Not S2
+  rtc_clk_bbpll_add_consumer();    // Maybe unneeded
+  usb_serial_jtag_ll_ena_intr_mask(USB_SERIAL_JTAG_INTR_SOF);
+  usb_serial_jtag_ll_clr_intsts_mask(USB_SERIAL_JTAG_INTR_SOF);
+  // First check if USB cable is connected - maybe add a new SetOption to prevent this
+  for (uint32_t i = 0; i < 1000; i++) {  // Allow the host to send at least one SOF packet, 1ms should be enough but let's be very conservative here - maybe unneeded
+      is_connected_to_USB = ((usb_serial_jtag_ll_get_intraw_mask() & USB_SERIAL_JTAG_INTR_SOF) != 0);
+      if (is_connected_to_USB) { break; }
+      delay(1);
+  }
+  rtc_clk_bbpll_remove_consumer();
+#else
+  is_connected_to_USB = true;      // S2
+#endif  // SOC_USB_SERIAL_JTAG_SUPPORTED
+
+  if (is_connected_to_USB) {
+    TasConsole.setRxBufferSize(INPUT_BUFFER_SIZE);
+  //  TasConsole.setTxBufferSize(INPUT_BUFFER_SIZE);
+    TasConsole.begin(115200);    // Will always be 115200 bps
+#if !ARDUINO_USB_MODE
+    USB.begin();                 // This needs a serial console with DTR/DSR support
+#endif  // No ARDUINO_USB_MODE
+    TasConsole.println();
+    AddLog(LOG_LEVEL_INFO, PSTR("CMD: Using USB CDC"));
+  } else {
+    // Init command serial console preparing for AddLog use
+    Serial.begin(TasmotaGlobal.baudrate);
+    Serial.println();
+    TasConsole = Serial; // Fallback
+    tasconsole_serial = true;
+    AddLog(LOG_LEVEL_INFO, PSTR("CMD: Fall back to serial port, no SOF packet detected on USB port"));
+  }
+#else   // No USE_USB_CDC_CONSOLE
+  // Init command serial console preparing for AddLog use
+  Serial.begin(TasmotaGlobal.baudrate);
+  Serial.println();
+//  Serial.setRxBufferSize(INPUT_BUFFER_SIZE);  // Default is 256 chars
+  TasConsole = Serial;
+#endif  // USE_USB_CDC_CONSOLE
+#else   // No ESP32C3, S2 or S3
+  // Init command serial console preparing for AddLog use
+  Serial.begin(TasmotaGlobal.baudrate);
+  Serial.println();
+//  Serial.setRxBufferSize(INPUT_BUFFER_SIZE);  // Default is 256 chars
+  TasConsole = Serial;
+#endif  // ESP32C3, S2 or S3
+
+#else  // ESP_IDF_VERSION_MAJOR < 5
+
   // Init command console (either serial or USB) preparing for AddLog use
   Serial.begin(TasmotaGlobal.baudrate);
   Serial.println();
 //  Serial.setRxBufferSize(INPUT_BUFFER_SIZE);  // Default is 256 chars
-#ifdef ESP32
 #if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
 #ifdef USE_USB_CDC_CONSOLE
   TasConsole.setRxBufferSize(INPUT_BUFFER_SIZE);
@@ -499,7 +600,14 @@ void setup(void) {
 #else   // No ESP32C3, S2 or S3
   TasConsole = Serial;
 #endif  // ESP32C3, S2 or S3
+
+#endif  // ESP_IDF_VERSION_MAJOR >= 5
+
 #else   // No ESP32
+  // Init command serial console preparing for AddLog use
+  Serial.begin(TasmotaGlobal.baudrate);
+  Serial.println();
+//  Serial.setRxBufferSize(INPUT_BUFFER_SIZE);  // Default is 256 chars
   TasConsole = Serial;
 #endif  // ESP32
 
@@ -507,7 +615,7 @@ void setup(void) {
 
 //  AddLog(LOG_LEVEL_INFO, PSTR("ADR: Settings %p, Log %p"), Settings, TasmotaGlobal.log_buffer);
 #ifdef ESP32
-  AddLog(LOG_LEVEL_INFO, PSTR("HDW: %s %s"), GetDeviceHardware().c_str(),
+  AddLog(LOG_LEVEL_INFO, PSTR("HDW: %s %s"), GetDeviceHardwareRevision().c_str(),
             FoundPSRAM() ? (CanUsePSRAM() ? "(PSRAM)" : "(PSRAM disabled)") : "" );
   // AddLog(LOG_LEVEL_DEBUG, PSTR("HDW: FoundPSRAM=%i CanUsePSRAM=%i"), FoundPSRAM(), CanUsePSRAM());
   #if !defined(HAS_PSRAM_FIX)
@@ -601,9 +709,9 @@ void setup(void) {
 
   memcpy_P(TasmotaGlobal.version, VERSION_MARKER, 1);  // Dummy for compiler saving VERSION_MARKER
 
-  snprintf_P(TasmotaGlobal.version, sizeof(TasmotaGlobal.version), PSTR("%d.%d.%d"), VERSION >> 24 & 0xff, VERSION >> 16 & 0xff, VERSION >> 8 & 0xff);  // Release version 6.3.0
-  if (VERSION & 0xff) {  // Development or patched version 6.3.0.10
-    snprintf_P(TasmotaGlobal.version, sizeof(TasmotaGlobal.version), PSTR("%s.%d"), TasmotaGlobal.version, VERSION & 0xff);
+  snprintf_P(TasmotaGlobal.version, sizeof(TasmotaGlobal.version), PSTR("%d.%d.%d"), TASMOTA_VERSION >> 24 & 0xff, TASMOTA_VERSION >> 16 & 0xff, TASMOTA_VERSION >> 8 & 0xff);  // Release version 6.3.0
+  if (TASMOTA_VERSION & 0xff) {  // Development or patched version 6.3.0.10
+    snprintf_P(TasmotaGlobal.version, sizeof(TasmotaGlobal.version), PSTR("%s.%d"), TasmotaGlobal.version, TASMOTA_VERSION & 0xff);
   }
 
   // Thehackbox inserts "release" or "commit number" before compiling using sed -i -e 's/PSTR("(%s)")/PSTR("(85cff52-%s)")/g' tasmota.ino
@@ -662,6 +770,8 @@ void setup(void) {
   if (bitRead(Settings->rule_enabled, 0)) Run_Scripter(">BS",3,0);
 #endif
 
+  XdrvCall(FUNC_ACTIVE);         // FUNC_ACTIVE
+
   TasmotaGlobal.rules_flag.system_init = 1;
 }
 
@@ -670,26 +780,42 @@ void BacklogLoop(void) {
     if (!BACKLOG_EMPTY && !TasmotaGlobal.backlog_mutex) {
       TasmotaGlobal.backlog_mutex = true;
       bool nodelay = false;
-      bool nodelay_detected = false;
-      String cmd;
       do {
-#ifdef SUPPORT_IF_STATEMENT
-        cmd = backlog.shift();
-#else
-        cmd = TasmotaGlobal.backlog[TasmotaGlobal.backlog_pointer];
-        TasmotaGlobal.backlog[TasmotaGlobal.backlog_pointer] = (const char*) nullptr;  // Force deallocation of the String internal memory
-        TasmotaGlobal.backlog_pointer++;
-        if (TasmotaGlobal.backlog_pointer >= MAX_BACKLOG) { TasmotaGlobal.backlog_pointer = 0; }
-#endif
-        nodelay_detected = !strncasecmp_P(cmd.c_str(), PSTR(D_CMND_NODELAY), strlen(D_CMND_NODELAY));
-        if (nodelay_detected) { nodelay = true; }
-      } while (!BACKLOG_EMPTY && nodelay_detected);
-      if (!nodelay_detected) {
-        ExecuteCommand((char*)cmd.c_str(), SRC_BACKLOG);
+        char* cmd = *backlog.head();
+        backlog.removeHead();
+/*
+        // This adds 32 bytes
+        char* cmd = *backlog.removeHead();
+*/
+        if (!strncasecmp_P(cmd, PSTR(D_CMND_NODELAY), strlen(D_CMND_NODELAY))) {
+          free(cmd);
+          nodelay = true;
+        } else {
+          ExecuteCommand(cmd, SRC_BACKLOG);
+          free(cmd);
+          if (nodelay || TasmotaGlobal.backlog_nodelay) {
+            TasmotaGlobal.backlog_timer = millis();  // Reset backlog_timer which has been set by ExecuteCommand (CommandHandler)
+          }
+          break;
+        }
+      } while (!BACKLOG_EMPTY);
+/*
+      // This adds 96 bytes
+      for (auto &cmd : backlog) {
+        backlog.remove(&cmd);
+        if (!strncasecmp_P(cmd, PSTR(D_CMND_NODELAY), strlen(D_CMND_NODELAY))) {
+          free(cmd);
+          nodelay = true;
+        } else {
+          ExecuteCommand(cmd, SRC_BACKLOG);
+          free(cmd);
+          if (nodelay || TasmotaGlobal.backlog_nodelay) {
+            TasmotaGlobal.backlog_timer = millis();  // Reset backlog_timer which has been set by ExecuteCommand (CommandHandler)
+          }
+          break;
+        }
       }
-      if (nodelay || TasmotaGlobal.backlog_nodelay) {
-        TasmotaGlobal.backlog_timer = millis();  // Reset backlog_timer which has been set by ExecuteCommand (CommandHandler)
-      }
+*/
       TasmotaGlobal.backlog_mutex = false;
     }
     if (BACKLOG_EMPTY) {
@@ -736,6 +862,7 @@ void Scheduler(void) {
   static uint32_t state_50msecond = 0;             // State 50msecond timer
   if (TimeReached(state_50msecond)) {
     SetNextTimeInterval(state_50msecond, 50);
+    LoopTimedCmnd();
 #ifdef ROTARY_V1
     RotaryHandler();
 #endif  // ROTARY_V1
@@ -773,6 +900,10 @@ void Scheduler(void) {
   ArduinoOtaLoop();
 #endif  // USE_ARDUINO_OTA
 #endif  // ESP8266
+
+#ifndef SYSLOG_UPDATE_SECOND
+  SyslogAsync(false);
+#endif  // SYSLOG_UPDATE_SECOND
 }
 
 void loop(void) {

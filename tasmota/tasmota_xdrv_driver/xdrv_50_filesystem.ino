@@ -48,6 +48,13 @@ ufs       fs info
 ufstype   get filesytem type 0=none 1=SD  2=Flashfile
 ufssize   total size in kB
 ufsfree   free size in kB
+ufsdelete
+ufsrename
+ufsrun
+ufsServe
+ftp       start stop ftp server: 0 = OFF, 1 = SDC, 2 = FlashFile
+
+
 \*********************************************************************************************/
 
 #define XDRV_50           50
@@ -548,13 +555,19 @@ const char kUFSCommands[] PROGMEM = "Ufs|"  // Prefix
 #ifdef UFILESYS_STATIC_SERVING
   "|Serve"
 #endif
+#ifdef USE_FTP
+  "|FTP"
+#endif
   ;
 
 void (* const kUFSCommand[])(void) PROGMEM = {
   &UFSInfo, &UFSType, &UFSSize, &UFSFree, &UFSDelete, &UFSRename, &UFSRun
 #ifdef UFILESYS_STATIC_SERVING
   ,&UFSServe
-#endif  
+#endif
+#ifdef USE_FTP
+  ,&Switch_FTP
+#endif
   };
 
 void UFSInfo(void) {
@@ -790,10 +803,12 @@ const char UFS_FORM_FILE_UPGc2[] PROGMEM =
   "</div>";
 
 const char UFS_FORM_FILE_UPG[] PROGMEM =
-  "<form method='post' action='ufsu' enctype='multipart/form-data'>"
+  "<form method='post' action='ufsu?fsz=' enctype='multipart/form-data'>"
   "<br><input type='file' name='ufsu'><br>"
-  "<br><button type='submit' onclick='eb(\"f1\").style.display=\"none\";eb(\"f2\").style.display=\"block\";this.form.submit();'>" D_START " %s</button></form>"
-  "<br>";
+  "<br><button type='submit' "
+  "onclick='eb(\"f1\").style.display=\"none\";eb(\"but6\").style.display=\"none\";eb(\"f2\").style.display=\"block\";this.form.action+=this.form[\"ufsu\"].files[0].size;this.form.submit();'"
+  ">" D_UPLOAD "</button></form>"
+  "<br><hr>";
 const char UFS_FORM_SDC_DIRa[] PROGMEM =
   "<div style='text-align:left;overflow:auto;height:250px;'>";
 const char UFS_FORM_SDC_DIRc[] PROGMEM =
@@ -844,6 +859,40 @@ const char HTTP_EDITOR_FORM_END[] PROGMEM =
   "</form></fieldset>";
 
 #endif  // #ifdef GUI_EDIT_FILE
+
+void HandleUploadUFSDone(void) {
+  if (!HttpCheckPriviledgedAccess()) { return; }
+
+  HTTPUpload& upload = Webserver->upload();
+
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_UPLOAD_DONE));
+
+  WifiConfigCounter();
+  UploadServices(1);
+
+  WSContentStart_P(PSTR(D_INFORMATION));
+
+  WSContentSendStyle();
+  WSContentSend_P(PSTR("<div style='text-align:center;'><b>" D_UPLOAD " <font color='#"));
+  if (Web.upload_error) {
+    WSContentSend_P(PSTR("%06x'>" D_FAILED "</font></b><br><br>"), WebColor(COL_TEXT_WARNING));
+    char error[100];
+    if (Web.upload_error < 10) {
+      GetTextIndexed(error, sizeof(error), Web.upload_error -1, kUploadErrors);
+    } else {
+      snprintf_P(error, sizeof(error), PSTR(D_UPLOAD_ERROR_CODE " %d"), Web.upload_error);
+    }
+    WSContentSend_P(error);
+    Web.upload_error = 0;
+  } else {
+    WSContentSend_P(PSTR("%06x'>" D_SUCCESSFUL "</font></b><br>"), WebColor(COL_TEXT_SUCCESS));
+  }
+  WSContentSend_P(PSTR("</div><br>"));
+
+  XdrvCall(FUNC_WEB_ADD_MANAGEMENT_BUTTON);
+
+  WSContentStop();
+}
 
 void UfsDirectory(void) {
   if (!HttpCheckPriviledgedAccess()) { return; }
@@ -910,7 +959,7 @@ void UfsDirectory(void) {
   }
   WSContentSend_P(UFS_FORM_FILE_UPGc2);
 
-  WSContentSend_P(UFS_FORM_FILE_UPG, PSTR(D_SCRIPT_UPLOAD));
+  WSContentSend_P(UFS_FORM_FILE_UPG);
 
   if (isdir){
     // if a folder, show 'folder: xxx' if not '/'
@@ -1348,9 +1397,46 @@ void UfsEditorUpload(void) {
 
 #endif  // USE_WEBSERVER
 
+
+#ifdef USE_FTP
+#include <ESPFtpServer.h>
+FtpServer *ftpSrv;
+
+void FTP_Server(uint32_t mode) {
+  if (mode > 0) {
+    if (ftpSrv) {
+      delete ftpSrv;
+    }
+    ftpSrv = new FtpServer;
+    if (mode == 1) {
+      ftpSrv->begin(USER_FTP,PW_FTP, ufsp);
+    } else {
+      ftpSrv->begin(USER_FTP,PW_FTP, ffsp);
+    }
+    AddLog(LOG_LEVEL_INFO, PSTR("UFS: FTP Server started in mode: '%d'"), mode);
+  } else {
+    if (ftpSrv) {
+      delete ftpSrv;
+      ftpSrv = nullptr;
+    }
+  }
+}
+
+void Switch_FTP(void) {
+  if (XdrvMailbox.data_len > 0) {
+    if (XdrvMailbox.payload >= 0 && XdrvMailbox.payload <= 2) {
+      FTP_Server(XdrvMailbox.payload);
+      Settings->mbflag2.FTP_Mode = XdrvMailbox.payload;
+    }
+  }
+  ResponseCmndNumber(Settings->mbflag2.FTP_Mode);
+}
+#endif // USE_FTP
+
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
+
 
 bool Xdrv50(uint32_t function) {
   bool result = false;
@@ -1358,7 +1444,23 @@ bool Xdrv50(uint32_t function) {
   switch (function) {
     case FUNC_LOOP:
       UfsExecuteCommandFileLoop();
+
+#ifdef USE_FTP
+      if (ftpSrv) {
+        ftpSrv->handleFTP();
+      }
+#endif
+
       break;
+    
+    case FUNC_NETWORK_UP:
+#ifdef USE_FTP
+      if (Settings->mbflag2.FTP_Mode && !ftpSrv) {
+        FTP_Server(Settings->mbflag2.FTP_Mode);
+      }
+#endif
+      break;
+
 /*
 // Moved to support_tasmota.ino for earlier init to be used by scripter
 #ifdef USE_SDCARD
@@ -1391,13 +1493,17 @@ bool Xdrv50(uint32_t function) {
 //      Webserver->on(F("/ufsu"), HTTP_POST,[](){Webserver->sendHeader(F("Location"),F("/ufsu"));Webserver->send(303);}, HandleUploadLoop);
       Webserver->on("/ufsd", UfsDirectory);
       Webserver->on("/ufsu", HTTP_GET, UfsDirectory);
-      Webserver->on("/ufsu", HTTP_POST,[](){Webserver->sendHeader(F("Location"),F("/ufsu"));Webserver->send(303);}, HandleUploadLoop);
+      //Webserver->on("/ufsu", HTTP_POST,[](){Webserver->sendHeader(F("Location"),F("/ufsu"));Webserver->send(303);}, HandleUploadLoop);
+      Webserver->on("/ufsu", HTTP_POST, HandleUploadUFSDone, HandleUploadLoop);
 #ifdef GUI_EDIT_FILE
       Webserver->on("/ufse", HTTP_GET, UfsEditor);
       Webserver->on("/ufse", HTTP_POST, UfsEditorUpload);
 #endif
       break;
 #endif // USE_WEBSERVER
+    case FUNC_ACTIVE:
+      result = true;
+      break;
   }
   return result;
 }

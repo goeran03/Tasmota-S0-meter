@@ -31,7 +31,7 @@
       "flash_extra_images": [
         [
           "0x10000",
-          "variants/tasmota/tasmota32solo1-safeboot.bin"
+          "tasmota32solo1-safeboot.bin"
         ]
       ]
     },
@@ -40,6 +40,9 @@
     "maximum_size": 4194304,
     "require_upload_port": true,
     "speed": 460800
+  },
+  "download": {
+    "speed": 230400
   },
   "url": "https://en.wikipedia.org/wiki/ESP32",
   "vendor": "Espressif"

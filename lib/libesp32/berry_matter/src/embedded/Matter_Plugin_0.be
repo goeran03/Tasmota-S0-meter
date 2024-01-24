@@ -27,18 +27,21 @@ import matter
 class Matter_Plugin
   # Global type system for plugins
   static var TYPE = ""                      # name of the plug-in in json
-  static var NAME = ""                      # display name of the plug-in
+  static var DISPLAY_NAME = ""                      # display name of the plug-in
   static var ARG  = ""                      # additional argument name (or empty if none)
   static var ARG_TYPE = / x -> str(x)       # function to convert argument to the right type
   static var ARG_HINT = "_Not used_"          # Hint for entering the Argument (inside 'placeholder')
   # Behavior of the plugin, frequency at which `update_shadow()` is called
   static var UPDATE_TIME = 5000             # default is every 5 seconds
+  static var VIRTUAL = false                # set to true only for virtual devices
   var update_next                           # next timestamp for update
   # Configuration of the plugin: clusters and type
   static var CLUSTERS = {
     0x001D: [0,1,2,3,0xFFFC,0xFFFD],                # Descriptor Cluster 9.5 p.453
     0x0039: [0x11],                                 # Bridged Device Basic Information 9.13 p.485
   }
+  # Accepted Update commands for virtual devices
+  static var UPDATE_COMMANDS = []
   var device                                # reference to the `device` global object
   var endpoint                              # current endpoint
   var clusters                              # map from cluster to list of attributes, typically constructed from CLUSTERS hierachy
@@ -147,6 +150,14 @@ class Matter_Plugin
     #   o = real_super(o)
     # end
     # return ret
+  end
+
+  #############################################################
+  # consolidate_update_commands
+  #
+  # Return consolidated "update commands" for this class
+  def consolidate_update_commands()
+    return self.UPDATE_COMMANDS
   end
 
   #############################################################
@@ -368,6 +379,41 @@ class Matter_Plugin
     end
     # print("ui_string_to_conf", conf, arg)
     return conf
+  end
+
+  #############################################################
+  # append_state_json
+  #
+  # Output the current state in JSON
+  # Takes the JSON string prefix
+  # New values need to be appended with `,"key":value` (including prefix comma)
+  def append_state_json()
+    return ""
+  end
+
+  # This is to be called by matter_device to get the full state JSON
+  # including "Ep":<ep>,"Name"="<friendly_name"
+  def state_json()
+    import json
+    var ep_name = self.node_label ? f',"Name":{json.dump(self.node_label)}' : ""
+    var state = self.append_state_json()
+    if state
+      var ret = f'{{"Ep":{self.endpoint:i}{ep_name}{state}}}'
+      return ret
+    else
+      return nil
+    end
+  end
+
+  #############################################################
+  # update_virtual
+  #
+  # Update internal state for virtual devices
+  # The map is pre-cleaned and contains only keys declared in
+  # `self.UPDATE_COMMANDS` with the adequate case
+  # (no need to handle case-insensitive)
+  def update_virtual(payload_json)
+    # pass
   end
 
 end

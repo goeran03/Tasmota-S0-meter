@@ -25,7 +25,7 @@ import matter
 
 class Matter_Plugin_Shutter : Matter_Plugin_Device
   static var TYPE = "shutter"                       # name of the plug-in in json
-  static var NAME = "Shutter"                       # display name of the plug-in
+  static var DISPLAY_NAME = "Shutter"                       # display name of the plug-in
   static var ARG  = "shutter"                       # additional argument name (or empty if none)
   static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type
   static var ARG_HINT = "Relay<x> number"
@@ -41,7 +41,6 @@ class Matter_Plugin_Shutter : Matter_Plugin_Device
   var tasmota_shutter_index                         # Shutter number in Tasmota (zero based)
   var shadow_shutter_pos
   var shadow_shutter_target
-  var shadow_shutter_tilt
   var shadow_shutter_direction                      # 1=opening -1=closing 0=not moving TODO
   var shadow_shutter_inverted                       # 1=same as matter 0=matter must invert
 
@@ -79,10 +78,12 @@ class Matter_Plugin_Shutter : Matter_Plugin_Device
   # Update shadow
   #
   def update_shadow()
-    self.update_inverted()
-    var sp = tasmota.cmd("ShutterPosition" + str(self.tasmota_shutter_index + 1), true)
-    if sp
-      self.parse_sensors(sp)
+    if !self.VIRTUAL
+      self.update_inverted()
+      var sp = tasmota.cmd("ShutterPosition" + str(self.tasmota_shutter_index + 1), true)
+      if sp
+        self.parse_sensors(sp)
+      end
     end
     super(self).update_shadow()
   end

@@ -254,6 +254,8 @@ static inline void lv_obj_set_style_pad_ver(struct _lv_obj_t * obj, lv_coord_t v
 static inline void lv_obj_set_style_pad_gap(struct _lv_obj_t * obj, lv_coord_t value, lv_style_selector_t selector)
 static inline void lv_obj_set_style_size(struct _lv_obj_t * obj, lv_coord_t value, lv_style_selector_t selector)
 lv_text_align_t lv_obj_calculate_style_text_align(const struct _lv_obj_t * obj, lv_part_t part, const char * txt)
+static inline lv_coord_t lv_obj_get_style_transform_zoom_safe(const struct _lv_obj_t * obj, uint32_t part)
+lv_opa_t lv_obj_get_style_opa_recursive(const struct _lv_obj_t * obj, lv_part_t part)
 
 // ../../lvgl/src/core/lv_obj_style_gen.h
 static inline lv_coord_t lv_obj_get_style_width(const struct _lv_obj_t * obj, uint32_t part)
@@ -341,6 +343,7 @@ static inline lv_text_align_t lv_obj_get_style_text_align(const struct _lv_obj_t
 static inline lv_coord_t lv_obj_get_style_radius(const struct _lv_obj_t * obj, uint32_t part)
 static inline bool lv_obj_get_style_clip_corner(const struct _lv_obj_t * obj, uint32_t part)
 static inline lv_opa_t lv_obj_get_style_opa(const struct _lv_obj_t * obj, uint32_t part)
+static inline lv_opa_t lv_obj_get_style_opa_layered(const struct _lv_obj_t * obj, uint32_t part)
 static inline const lv_color_filter_dsc_t * lv_obj_get_style_color_filter_dsc(const struct _lv_obj_t * obj, uint32_t part)
 static inline lv_opa_t lv_obj_get_style_color_filter_opa(const struct _lv_obj_t * obj, uint32_t part)
 static inline const lv_anim_t * lv_obj_get_style_anim(const struct _lv_obj_t * obj, uint32_t part)
@@ -425,6 +428,7 @@ void lv_obj_set_style_text_align(struct _lv_obj_t * obj, lv_text_align_t value, 
 void lv_obj_set_style_radius(struct _lv_obj_t * obj, lv_coord_t value, lv_style_selector_t selector)
 void lv_obj_set_style_clip_corner(struct _lv_obj_t * obj, bool value, lv_style_selector_t selector)
 void lv_obj_set_style_opa(struct _lv_obj_t * obj, lv_opa_t value, lv_style_selector_t selector)
+void lv_obj_set_style_opa_layered(struct _lv_obj_t * obj, lv_opa_t value, lv_style_selector_t selector)
 void lv_obj_set_style_color_filter_dsc(struct _lv_obj_t * obj, const lv_color_filter_dsc_t * value, lv_style_selector_t selector)
 void lv_obj_set_style_color_filter_opa(struct _lv_obj_t * obj, lv_opa_t value, lv_style_selector_t selector)
 void lv_obj_set_style_anim(struct _lv_obj_t * obj, const lv_anim_t * value, lv_style_selector_t selector)
@@ -661,6 +665,19 @@ lv_obj_t * lv_imgbtn_create(lv_obj_t * parent)
 void lv_imgbtn_set_src(lv_obj_t * imgbtn, lv_imgbtn_state_t state, const void * src_left, const void * src_mid, const void * src_right)
 void lv_imgbtn_set_state(lv_obj_t * imgbtn, lv_imgbtn_state_t state)
 
+// ../../lvgl/src/extra/widgets/keyboard/lv_keyboard.h
+lv_obj_t * lv_keyboard_create(lv_obj_t * parent)
+void lv_keyboard_set_textarea(lv_obj_t * kb, lv_obj_t * ta)
+void lv_keyboard_set_mode(lv_obj_t * kb, lv_keyboard_mode_t mode)
+void lv_keyboard_set_popovers(lv_obj_t * kb, bool en)
+void lv_keyboard_set_map(lv_obj_t * kb, lv_keyboard_mode_t mode, const char * map[], const lv_btnmatrix_ctrl_t ctrl_map[])
+lv_obj_t * lv_keyboard_get_textarea(const lv_obj_t * kb)
+lv_keyboard_mode_t lv_keyboard_get_mode(const lv_obj_t * kb)
+bool lv_btnmatrix_get_popovers(const lv_obj_t * obj)
+static inline const char ** lv_keyboard_get_map_array(const lv_obj_t * kb)
+static inline uint16_t lv_keyboard_get_selected_btn(const lv_obj_t * obj)
+static inline const char * lv_keyboard_get_btn_text(const lv_obj_t * obj, uint16_t btn_id)
+
 // ../../lvgl/src/extra/widgets/led/lv_led.h
 lv_obj_t * lv_led_create(lv_obj_t * parent)
 void lv_led_set_color(lv_obj_t * led, lv_color_t color)
@@ -669,6 +686,12 @@ void lv_led_on(lv_obj_t * led)
 void lv_led_off(lv_obj_t * led)
 void lv_led_toggle(lv_obj_t * led)
 uint8_t lv_led_get_brightness(const lv_obj_t * obj)
+
+// ../../lvgl/src/extra/widgets/list/lv_list.h
+lv_obj_t * lv_list_create(lv_obj_t * parent)
+lv_obj_t * lv_list_add_text(lv_obj_t * list, const char * txt)
+lv_obj_t * lv_list_add_btn(lv_obj_t * list, const void * icon, const char * txt)
+const char * lv_list_get_btn_text(lv_obj_t * list, lv_obj_t * btn)
 
 // ../../lvgl/src/extra/widgets/meter/lv_meter.h
 lv_obj_t * lv_meter_create(lv_obj_t * parent)
@@ -715,6 +738,22 @@ void lv_spinbox_decrement(lv_obj_t * obj)
 
 // ../../lvgl/src/extra/widgets/spinner/lv_spinner.h
 lv_obj_t * lv_spinner_create(lv_obj_t * parent, uint32_t time, uint32_t arc_length)
+
+// ../../lvgl/src/extra/widgets/tabview/lv_tabview.h
+lv_obj_t * lv_tabview_create(lv_obj_t * parent, lv_dir_t tab_pos, lv_coord_t tab_size)
+lv_obj_t * lv_tabview_add_tab(lv_obj_t * tv, const char * name)
+void lv_tabview_rename_tab(lv_obj_t * obj, uint32_t tab_id, const char * new_name)
+lv_obj_t * lv_tabview_get_content(lv_obj_t * tv)
+lv_obj_t * lv_tabview_get_tab_btns(lv_obj_t * tv)
+void lv_tabview_set_act(lv_obj_t * obj, uint32_t id, lv_anim_enable_t anim_en)
+uint16_t lv_tabview_get_tab_act(lv_obj_t * tv)
+
+// ../../lvgl/src/extra/widgets/tileview/lv_tileview.h
+lv_obj_t * lv_tileview_create(lv_obj_t * parent)
+lv_obj_t * lv_tileview_add_tile(lv_obj_t * tv, uint8_t col_id, uint8_t row_id, lv_dir_t dir)
+void lv_obj_set_tile(lv_obj_t * tv, lv_obj_t * tile_obj, lv_anim_enable_t anim_en)
+void lv_obj_set_tile_id(lv_obj_t * tv, uint32_t col_id, uint32_t row_id, lv_anim_enable_t anim_en)
+lv_obj_t * lv_tileview_get_tile_act(lv_obj_t * obj)
 
 // ../../lvgl/src/font/lv_font.h
 const uint8_t * lv_font_get_glyph_bitmap(const lv_font_t * font_p, uint32_t letter)
@@ -908,6 +947,7 @@ void lv_style_set_text_align(lv_style_t * style, lv_text_align_t value)
 void lv_style_set_radius(lv_style_t * style, lv_coord_t value)
 void lv_style_set_clip_corner(lv_style_t * style, bool value)
 void lv_style_set_opa(lv_style_t * style, lv_opa_t value)
+void lv_style_set_opa_layered(lv_style_t * style, lv_opa_t value)
 void lv_style_set_color_filter_dsc(lv_style_t * style, const lv_color_filter_dsc_t * value)
 void lv_style_set_color_filter_opa(lv_style_t * style, lv_opa_t value)
 void lv_style_set_anim(lv_style_t * style, const lv_anim_t * value)
@@ -1125,12 +1165,14 @@ void lv_table_set_col_cnt(lv_obj_t * obj, uint16_t col_cnt)
 void lv_table_set_col_width(lv_obj_t * obj, uint16_t col_id, lv_coord_t w)
 void lv_table_add_cell_ctrl(lv_obj_t * obj, uint16_t row, uint16_t col, lv_table_cell_ctrl_t ctrl)
 void lv_table_clear_cell_ctrl(lv_obj_t * obj, uint16_t row, uint16_t col, lv_table_cell_ctrl_t ctrl)
+void lv_table_set_cell_user_data(lv_obj_t * obj, uint16_t row, uint16_t col, void * user_data)
 const char * lv_table_get_cell_value(lv_obj_t * obj, uint16_t row, uint16_t col)
 uint16_t lv_table_get_row_cnt(lv_obj_t * obj)
 uint16_t lv_table_get_col_cnt(lv_obj_t * obj)
 lv_coord_t lv_table_get_col_width(lv_obj_t * obj, uint16_t col)
 bool lv_table_has_cell_ctrl(lv_obj_t * obj, uint16_t row, uint16_t col, lv_table_cell_ctrl_t ctrl)
 void lv_table_get_selected_cell(lv_obj_t * obj, uint16_t * row, uint16_t * col)
+void * lv_table_get_cell_user_data(lv_obj_t * obj, uint16_t row, uint16_t col)
 
 // ../../lvgl/src/widgets/lv_textarea.h
 lv_obj_t * lv_textarea_create(lv_obj_t * parent)

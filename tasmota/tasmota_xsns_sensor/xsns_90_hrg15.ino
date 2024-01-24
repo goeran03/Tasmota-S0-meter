@@ -159,6 +159,9 @@ void Rg15Init(void) {
     if (HydreonSerial) {
       if (HydreonSerial->begin(RG15_BAUDRATE)) {
         if (HydreonSerial->hardwareSerial()) { ClaimSerial(); }
+#ifdef ESP32
+        AddLog(LOG_LEVEL_DEBUG, PSTR("HRG: Serial UART%d"), HydreonSerial->getUart());
+#endif
         Rg15.init_step = 5;                  // Perform RG-15 init
       }
     }
@@ -211,7 +214,7 @@ void Rg15Poll(void) {
 void Rg15Show(bool json) {
   if (json) {
     // if the parsing wasn't completely successful then skip the update
-    if( isfinite(Rg15.acc) && isfinite(Rg15.event) && isfinite(Rg15.total) && isfinite(Rg15.rate) ) {
+    if( !isnan(Rg15.acc) && !isnan(Rg15.event) && !isnan(Rg15.total) && !isnan(Rg15.rate) ) {
       ResponseAppend_P(PSTR(",\"" RG15_NAME "\":{"));
       ResponseAppend_P(PSTR("\"%s\":%.2f, "), D_JSON_ACTIVE, Rg15.acc);
       ResponseAppend_P(PSTR("\"%s\":%.2f, "), D_JSON_EVENT, Rg15.event);
@@ -242,7 +245,9 @@ bool Rg15Command(void) {
       Rg15.init_step = 5;                    // Perform RG-15 init
     }
 
-    ResponseCmndDone();
+    ResponseCmndIdxChar(XdrvMailbox.data);
+  } else {
+    ResponseCmndIdxError();
   }
 
   return serviced;

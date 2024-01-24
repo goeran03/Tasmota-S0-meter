@@ -25,7 +25,9 @@ import matter
 
 class Matter_Plugin_Sensor_Illuminance : Matter_Plugin_Sensor
   static var TYPE = "illuminance"                   # name of the plug-in in json
-  static var NAME = "Illuminance"                   # display name of the plug-in
+  static var DISPLAY_NAME = "Illuminance"           # display name of the plug-in
+  static var JSON_NAME = "Illuminance"              # Name of the sensor attribute in JSON payloads
+  static var UPDATE_COMMANDS = matter.UC_LIST(_class, "Illuminance")
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
     0x0400: [0,1,2,0xFFFC,0xFFFD],                  # Illuminance Measurement p.95 - no writable
   })
@@ -52,7 +54,7 @@ class Matter_Plugin_Sensor_Illuminance : Matter_Plugin_Sensor
   #
   # This must be overriden.
   # This is where you call `self.attribute_updated(<cluster>, <attribute>)`
-  def value_changed(val)
+  def value_changed()
     self.attribute_updated(0x0400, 0x0000)
   end
 

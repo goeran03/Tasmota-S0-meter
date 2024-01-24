@@ -200,54 +200,7 @@
   #define CODE_IMAGE_STR "arduino30"
 #endif
 
-
-#undef FIRMWARE_LITE                            // Disable tasmota-lite with no sensors
-#undef FIRMWARE_SENSORS                         // Disable tasmota-sensors with useful sensors enabled
-#undef FIRMWARE_KNX_NO_EMULATION                // Disable tasmota-knx with KNX but without Emulation
-#undef FIRMWARE_DISPLAYS                        // Disable tasmota-display with display drivers enabled
-#undef FIRMWARE_IR                              // Disable tasmota-ir with IR full protocols activated
-#undef FIRMWARE_WEBCAM
-#undef FIRMWARE_BLUETOOTH
-#undef FIRMWARE_LVGL
-#undef FIRMWARE_TASMOTA32
-
-#undef USE_EMULATION                             // Disable Wemo or Hue emulation
-#undef USE_EMULATION_HUE                         // Disable Hue Bridge emulation for Alexa (+14k code, +2k mem common)
-#undef USE_EMULATION_WEMO                        // Disable Belkin WeMo emulation for Alexa (+6k code, +2k mem common)
-
-
-// -- Optional modules ----------------------------
-#undef ROTARY_V1                                 // Disable support for MI Desk Lamp
-#undef USE_SONOFF_RF                             // Disable support for Sonoff Rf Bridge (+3k2 code)
-  #undef USE_RF_FLASH                            // Disable support for flashing the EFM8BB1 chip on the Sonoff RF Bridge. C2CK must be connected to GPIO4, C2D to GPIO5 on the PCB
-#undef USE_SONOFF_SC                             // Disable support for Sonoff Sc (+1k1 code)
-#undef USE_TUYA_MCU                              // Disable support for Tuya Serial MCU
-#undef USE_ARMTRONIX_DIMMERS                     // Disable support for Armtronix Dimmers (+1k4 code)
-#undef USE_PS_16_DZ                              // Disable support for PS-16-DZ Dimmer and Sonoff L1 (+2k code)
-#undef USE_SONOFF_IFAN                           // Disable support for Sonoff iFan02 and iFan03 (+2k code)
-#undef USE_BUZZER                                // Disable support for a buzzer (+0k6 code)
-#undef USE_ARILUX_RF                             // Disable support for Arilux RF remote controller
-#undef USE_SHUTTER                               // Disable Shutter support for up to 4 shutter with different motortypes (+6k code)
-#undef USE_DEEPSLEEP                             // Disable support for deepsleep (+1k code)
-#undef USE_EXS_DIMMER                            // Disable support for EX-Store WiFi Dimmer
-#undef USE_HOTPLUG                               // Disable support for HotPlug
-#undef USE_DEVICE_GROUPS                         // Disable support for device groups (+3k5 code)
-#undef USE_PWM_DIMMER                            // Disable support for MJ-SD01/acenx/NTONPOWER PWM dimmers (+4k5 code)
-#undef USE_PWM_DIMMER_REMOTE                     // Disbale support for remote switches to PWM Dimmer
-#undef USE_KEELOQ                                // Disable support for Jarolift rollers by Keeloq algorithm (+4k5 code)
-#undef USE_SONOFF_D1                             // Disable support for Sonoff D1 Dimmer (+0k7 code)
-#undef USE_SHELLY_DIMMER                         // Disable support for Shelly Dimmer (+3k code)
-
-#undef USE_ENERGY_SENSOR                         // Disable energy sensors
-#undef USE_IR_REMOTE                             // Disable IR driver
-#undef USE_AC_ZERO_CROSS_DIMMER                  // Disable support for AC_ZERO_CROSS_DIMMER
-
-#define USE_TLS
-#define USE_WEBSERVER
-#define USE_WEBCLIENT
-#define USE_WEBCLIENT_HTTPS
-#define USE_SERIAL_BRIDGE                        // Add support for software Serial Bridge console Tee (+2k code)
-#define USE_ETHERNET
+#define FIRMWARE_TASMOTA32
 
 #endif  // FIRMWARE_ARDUINO30
 
@@ -319,19 +272,17 @@
 
 #define USE_SDCARD
 
-#define USE_ADC
+#ifndef USE_BERRY_ULP                              // potential performance gains with ULP
+  #define USE_ADC                                  // so do not use common ADC funtions in that case
+#endif
 //#undef USE_BERRY                                 // Disable Berry scripting language
-#if defined(USE_MI_HOMEKIT)                      // Switch between Homekit and full BLE driver
-  #define USE_MI_ESP32
-  #if(USE_MI_HOMEKIT != 1)                       // Enable(1)/ Disable(0) Homekit, only for the .c-file
-    #undef USE_MI_HOMEKIT
-  #endif // disable USE_MI_HOMEKIT
-#else
-  #define USE_ETHERNET                             // Add support for ethernet (+20k code)
-  #define USE_BLE_ESP32                          // Enable full BLE driver
+
+#define USE_ETHERNET                             // Add support for ethernet (+20k code)
+#ifndef USE_MI_EXT_GUI
+  #define USE_BLE_ESP32                            // Enable full BLE driver
   #define USE_EQ3_ESP32
-  #define USE_MI_ESP32                           // (ESP32 only) Add support for ESP32 as a BLE-bridge (+9k2 mem, +292k flash)
-#endif // enable USE_MI_HOMEKIT
+#endif // USE_MI_EXT_GUI
+#define USE_MI_ESP32                             // (ESP32 only) Add support for ESP32 as a BLE-bridge (+9k2 mem, +292k flash)
 
 #endif  // FIRMWARE_BLUETOOTH
 
@@ -371,6 +322,7 @@
 #define USE_XPT2046
 #define USE_FT5206
 #define USE_GT911
+#define USE_CST816S
 #define USE_MPU_ACCEL
 #define USE_RTC_CHIPS                            // Enable RTC chip support and NTP server - Select only one
   #define USE_BM8563
@@ -451,6 +403,8 @@
 //#define USE_MPR121                             // [I2cDriver23] Enable MPR121 controller (I2C addresses 0x5A, 0x5B, 0x5C and 0x5D) in input mode for touch buttons (+1k3 code)
 //#define USE_CCS811                             // [I2cDriver24] Enable CCS811 sensor (I2C address 0x5A) (+2k2 code)
 //#define USE_CCS811_V2                          // [I2cDriver24] Enable CCS811 sensor (I2C addresses 0x5A and 0x5B) (+2k8 code)
+//#define USE_ENS16x                             // [I2cDriver85] Enable ENS160 and ENS161 sensor (I2C addresses 0x52 and 0x53) (+3k1 of code and 524 of RAM)
+//#define USE_ENS210                             // [I2cDriver86] Enable ENS210 sensor (I2C addresses 0x43 and 0x44) (+4k0 of code and 944 of RAM)
 //#define USE_MPU6050                            // [I2cDriver25] Enable MPU6050 sensor (I2C address 0x68 AD0 low or 0x69 AD0 high) (+3K3 of code and 188 Bytes of RAM)
 //#define USE_MGC3130                            // [I2cDriver27] Enable MGC3130 Electric Field Effect Sensor (I2C address 0x42) (+2k7 code, 0k3 mem)
 //#define USE_MAX44009                           // [I2cDriver28] Enable MAX44009 Ambient Light sensor (I2C addresses 0x4A and 0x4B) (+0k8 code)
@@ -653,6 +607,9 @@
 
 #define USE_LIGHT_PALETTE                        // Add support for color palette (+0k9 code)
 #define USE_LIGHT_ARTNET                         // Add support for DMX/ArtNet via UDP on port 6454 (+3.5k code)
+#ifdef CONFIG_IDF_TARGET_ESP32C3
+#define USE_MAGIC_SWITCH                         // Add Sonoff MagicSwitch support as implemented in Sonoff Basic R4
+#endif
 
 #define USE_DS18x20                              // Add support for DS18x20 sensors with id sort, single scan and read retry (+1k3 code)
 
@@ -686,6 +643,8 @@
 //#define USE_MPR121                             // [I2cDriver23] Enable MPR121 controller (I2C addresses 0x5A, 0x5B, 0x5C and 0x5D) in input mode for touch buttons (+1k3 code)
 //#define USE_CCS811                             // [I2cDriver24] Enable CCS811 sensor (I2C address 0x5A) (+2k2 code)
 #define USE_CCS811_V2                          // [I2cDriver24] Enable CCS811 sensor (I2C addresses 0x5A and 0x5B) (+2k8 code)
+//#define USE_ENS16x                             // [I2cDriver85] Enable ENS160 and ENS161 sensor (I2C addresses 0x52 and 0x53) (+3k1 of code and 524 of RAM)
+//#define USE_ENS210                             // [I2cDriver86] Enable ENS210 sensor (I2C addresses 0x43 and 0x44) (+4k0 of code and 944 of RAM)
 #define USE_MPU_ACCEL                          // [I2cDriver58] Enable MPU6886, MPU9250 6-axis MotionTracking sensor (I2C address 0x68)
 //#define USE_MPU6050                            // [I2cDriver25] Enable MPU6050 sensor (I2C address 0x68 AD0 low or 0x69 AD0 high) (+3K3 of code and 188 Bytes of RAM)
 //#define USE_MGC3130                            // [I2cDriver27] Enable MGC3130 Electric Field Effect Sensor (I2C address 0x42) (+2k7 code, 0k3 mem)

@@ -122,7 +122,7 @@ const uint8_t MAX_STATE_TEXT = 4;           // Max number of State names (OFF, O
 const uint8_t MAX_NTP_SERVERS = 3;          // Max number of NTP servers
 const uint8_t MAX_RULE_MEMS = 16;           // Max number of saved vars
 const uint8_t MAX_FRIENDLYNAMES = 8;        // Max number of Friendly names
-const uint8_t MAX_BUTTON_TEXT = 16;         // Max number of GUI button labels
+const uint8_t MAX_BUTTON_TEXT = 32;         // Max number of GUI button labels
 const uint8_t MAX_GROUP_TOPICS = 4;         // Max number of Group Topics
 const uint8_t MAX_DEV_GROUP_NAMES = 4;      // Max number of Device Group names
 
@@ -143,7 +143,7 @@ const uint8_t MAX_SWITCHES_TXT = 8;         // Max number of switches user text
 const uint8_t MAX_SWITCHES_TXT = 28;        // Max number of switches user text
 #endif  // ESP32
 
-const uint8_t MAX_HUE_DEVICES = 15;         // Max number of Philips Hue device per emulation
+const uint8_t MAX_HUE_DEVICES = 32;         // Max number of Philips Hue device per emulation
 const uint8_t MAX_ROTARIES = 2;             // Max number of Rotary Encoders
 
 const char MQTT_TOKEN_PREFIX[] PROGMEM = "%prefix%";  // To be substituted by mqtt_prefix[x]
@@ -220,7 +220,6 @@ const uint16_t MAX_LOGSZ = 700;             // Max number of characters in log l
 
 const uint8_t SENSOR_MAX_MISS = 5;          // Max number of missed sensor reads before deciding it's offline
 
-const uint8_t MAX_BACKLOG = 30;             // Max number of commands in backlog
 const uint32_t MIN_BACKLOG_DELAY = 200;     // Minimal backlog delay in mSeconds
 
 const uint32_t SOFT_BAUDRATE = 9600;        // Default software serial baudrate
@@ -423,7 +422,7 @@ enum LightSubtypes { LST_NONE, LST_SINGLE, LST_COLDWARM, LST_RGB,   LST_RGBW, LS
 enum LightTypes    { LT_BASIC, LT_PWM1,    LT_PWM2,      LT_PWM3,   LT_PWM4,  LT_PWM5,  LT_PWM6, LT_PWM7,
                      LT_NU8,   LT_SERIAL1, LT_SERIAL2,   LT_RGB,    LT_RGBW,  LT_RGBWC, LT_NU14, LT_NU15 };  // Do not insert new fields
 
-enum XsnsFunctions { FUNC_SETTINGS_OVERRIDE, FUNC_SETUP_RING1, FUNC_SETUP_RING2, FUNC_PRE_INIT, FUNC_INIT,
+enum XsnsFunctions { FUNC_SETTINGS_OVERRIDE, FUNC_SETUP_RING1, FUNC_SETUP_RING2, FUNC_PRE_INIT, FUNC_INIT, FUNC_ACTIVE,
                      FUNC_LOOP, FUNC_SLEEP_LOOP, FUNC_EVERY_50_MSECOND, FUNC_EVERY_100_MSECOND, FUNC_EVERY_200_MSECOND, FUNC_EVERY_250_MSECOND, FUNC_EVERY_SECOND,
                      FUNC_RESET_SETTINGS, FUNC_RESTORE_SETTINGS, FUNC_SAVE_SETTINGS, FUNC_SAVE_AT_MIDNIGHT, FUNC_SAVE_BEFORE_RESTART, FUNC_INTERRUPT_STOP, FUNC_INTERRUPT_START,
                      FUNC_AFTER_TELEPERIOD, FUNC_JSON_APPEND, FUNC_WEB_SENSOR, FUNC_WEB_COL_SENSOR,
@@ -484,7 +483,13 @@ enum SettingsTextIndex { SET_OTAURL,
                          SET_SHD_PARAM,
                          SET_RGX_SSID, SET_RGX_PASSWORD,
                          SET_INFLUXDB_HOST, SET_INFLUXDB_PORT, SET_INFLUXDB_ORG, SET_INFLUXDB_TOKEN, SET_INFLUXDB_BUCKET, SET_INFLUXDB_RP,
-                         SET_MAX };
+                         SET_CANVAS,
+                         SET_MAX, // limit of texts stored in Settings
+                         // Index above are not stored in Settings and should be handled specifically in SettingText()
+                         SET_BUTTON17, SET_BUTTON18, SET_BUTTON19, SET_BUTTON20, SET_BUTTON21, SET_BUTTON22, SET_BUTTON23, SET_BUTTON24,
+                         SET_BUTTON25, SET_BUTTON26, SET_BUTTON27, SET_BUTTON28, SET_BUTTON29, SET_BUTTON30, SET_BUTTON31, SET_BUTTON32,
+                         SET_FINAL_MAX
+                         };
 
 enum SpiInterfaces { SPI_NONE, SPI_MOSI, SPI_MISO, SPI_MOSI_MISO };
 

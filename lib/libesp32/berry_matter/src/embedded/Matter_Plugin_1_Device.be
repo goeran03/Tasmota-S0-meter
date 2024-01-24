@@ -37,14 +37,6 @@ class Matter_Plugin_Device : Matter_Plugin
   # var clusters                                      # map from cluster to list of attributes, typically constructed from CLUSTERS hierachy
   # var tick                                          # tick value when it was last updated
   # var node_label                                    # name of the endpoint, used only in bridge mode, "" if none
-  var virtual                                       # (bool) is the device pure virtual (i.e. not related to a device implementation by Tasmota)
-
-  #############################################################
-  # Constructor
-  def init(device, endpoint, config)
-    self.virtual = config.find("virtual", false)
-    super(self).init(device, endpoint, config)
-  end
 
   #############################################################
   # read an attribute
@@ -180,11 +172,46 @@ class Matter_Plugin_Device : Matter_Plugin
   end
 
   #############################################################
-  # update_virtual
+  # append_state_json
   #
-  # Update internal state for virtual devices
-  def update_virtual(payload_json)
-    # pass
+  # Output the current state in JSON.
+  # The JSON is build via introspection to see what attributes
+  # exist and need to be output
+  # New values need to be appended with `,"key":value` (including prefix comma)
+  def append_state_json()
+    import introspect
+    var ret = ""
+
+    # ret: string
+    # attribute: attrbute name
+    # key: in json
+    def _stats_json_inner(attribute, key)
+      import introspect
+      import json
+      var val
+      if (val := introspect.get(self, attribute)) != nil
+        if type(val) == 'bool'    val = int(val)  end         # transform bool into 1/0
+        ret += f',"{key}":{json.dump(val)}'
+      end
+    end
+
+    # lights
+    # print(f'{self=} {type(self)} {introspect.members(self)=}')
+    _stats_json_inner("shadow_onoff",      "Power")
+    _stats_json_inner("shadow_bri",        "Bri")
+    _stats_json_inner("shadow_ct",         "CT")
+    _stats_json_inner("shadow_hue",        "Hue")
+    _stats_json_inner("shadow_sat",        "Sat")
+    # shutters
+    _stats_json_inner("shadow_shutter_pos",    "ShutterPos")
+    _stats_json_inner("shadow_shutter_target", "ShutterTarget")
+    _stats_json_inner("shadow_shutter_tilt",   "ShutterTilt")
+
+    # sensors
+    _stats_json_inner("shadow_contact",    "Contact")
+    _stats_json_inner("shadow_occupancy",  "Occupancy")
+    # print(ret)
+    return ret
   end
 
 end

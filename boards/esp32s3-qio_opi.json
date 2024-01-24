@@ -31,7 +31,7 @@
       "flash_extra_images": [
         [
           "0x10000",
-          "variants/tasmota/tasmota32s3-safeboot.bin"
+          "tasmota32s3-safeboot.bin"
         ]
       ]
     },
@@ -40,6 +40,9 @@
     "maximum_size": 4194304,
     "require_upload_port": true,
     "speed": 460800
+  },
+  "download": {
+    "speed": 230400
   },
   "url": "https://docs.espressif.com/projects/esp-idf/en/latest/esp32s3/hw-reference/esp32s3/",
   "vendor": "Espressif"

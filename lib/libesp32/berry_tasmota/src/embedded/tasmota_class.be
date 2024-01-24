@@ -64,6 +64,19 @@ class Tasmota
     end
   end
 
+  # find a string in a list, case insensitive
+  def find_list_i(l, vali)
+    import string
+    var idx = 0
+    var valu = string.toupper(vali)
+    while idx < size(l)
+      if string.toupper(l[idx]) == valu
+        return idx
+      end
+      idx += 1
+    end
+    return nil
+  end
 
   # split the item when there is an operator, returns a list of (left,op,right)
   #-
@@ -415,6 +428,10 @@ class Tasmota
           return true
         except .. as e, m
           print(format("BRY: failed to run compiled code '%s' - %s", e, m))
+          if self._debug_present
+            import debug
+            debug.traceback()
+          end
         end
       end
       return false
@@ -540,8 +557,7 @@ class Tasmota
 
     # iterate and call each closure
     var i = 0
-    var sz = size(fl)
-    while i < sz
+    while i < size(fl)
       # note: this is not guarded in try/except for performance reasons. The inner function must not raise exceptions
       fl[i]()
       i += 1

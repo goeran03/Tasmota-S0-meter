@@ -141,6 +141,13 @@ struct ATCPacket_t{ //and PVVX
   };
 };
 
+struct BLERingBufferItem_t{
+  uint16_t returnCharUUID;
+  uint16_t handle;
+  uint32_t type;
+  uint8_t length;
+};
+
 #pragma pack(0)
 
 
@@ -149,29 +156,15 @@ struct MI32connectionContextBerry_t{
   NimBLEUUID charUUID;
   uint16_t returnCharUUID;
   uint16_t handle;
-  uint8_t MAC[6];
   uint8_t * buffer;
+  uint8_t MAC[6];
   uint8_t operation;
   uint8_t addrType;
   int error;
+  int32_t arg1;
+  bool hasArg1;
   bool oneOp;
   bool response;
-};
-
-struct MI32notificationBuffer_t{
-  uint8_t buffer[256];
-  uint16_t returnCharUUID;
-};
-
-struct BLEqueueBuffer_t{
-  union{
-    uint8_t *buffer;
-    int32_t value;
-  };
-  size_t length;
-  uint16_t returnCharUUID;
-  uint16_t handle;
-  uint16_t type;
 };
 
 struct {
@@ -198,7 +191,7 @@ struct {
       uint32_t triggeredTele:1;
       uint32_t shallShowStatusInfo:1; // react to amount of found sensors via RULES
       uint32_t didGetConfig:1;
-      uint32_t didStartHAP:1;
+
       uint32_t triggerBerryAdvCB:1;
       uint32_t triggerBerryConnCB:1;
       uint32_t triggerNextConnJob:1;
@@ -230,17 +223,12 @@ struct {
 #endif //USE_ENERGY_SENSOR
 #endif //USE_MI_EXT_GUI
 
-#ifdef USE_MI_HOMEKIT
-  void *outlet_hap_service[4]; //arbitrary chosen
-  int8_t HKconnectedControllers = 0; //should never be < 0
-  uint8_t HKinfoMsg = 0;
-  char hk_setup_code[11];
-#endif //USE_MI_HOMEKIT
   void *beConnCB;
   void *beAdvCB;
   void *beServerCB;
   uint8_t *beAdvBuf;
   uint8_t infoMsg = 0;
+  uint8_t role = 0;
 } MI32;
 
 struct mi_sensor_t{
@@ -249,8 +237,8 @@ struct mi_sensor_t{
   uint8_t shallSendMQTT;
   uint8_t MAC[6];
   uint16_t PID;
-  uint8_t *key;
-  uint32_t lastTimeSeen;
+  uint8_t *key = nullptr;
+  char *name = nullptr;
   union {
     struct {
       uint32_t needsKey:1;
@@ -331,17 +319,6 @@ struct mi_sensor_t{
   union {
       uint8_t bat; // many values seem to be hard-coded garbage (LYWSD0x, GCD1)
   };
-#ifdef USE_MI_HOMEKIT
-  //HAP handles
-  void *temp_hap_service;
-  void *hum_hap_service;
-  void *light_hap_service;
-  void *motion_hap_service;
-  void *door_sensor_hap_service;
-  void *button_hap_service[6];
-  void *bat_hap_service;
-  void *leak_hap_service;
-#endif //USE_MI_HOMEKIT
 };
 
 /*********************************************************************************************\
@@ -350,9 +327,9 @@ struct mi_sensor_t{
 
 #define D_CMND_MI32 "MI32"
 
-const char kMI32_Commands[] PROGMEM = D_CMND_MI32 "|Key|Cfg|Option";
+const char kMI32_Commands[] PROGMEM = D_CMND_MI32 "|Key|Name|Cfg|Option";
 
-void (*const MI32_Commands[])(void) PROGMEM = {&CmndMi32Key, &CmndMi32Cfg, &CmndMi32Option };
+void (*const MI32_Commands[])(void) PROGMEM = {&CmndMi32Key, &CmndMi32Name,&CmndMi32Cfg, &CmndMi32Option };
 
 #define UNKNOWN_MI  0
 #define FLORA       1
@@ -399,8 +376,6 @@ const char kMI32DeviceType[] PROGMEM = {"Flora|MJ_HT_V1|LYWSD02|LYWSD03|CGG1|CGD
 const char kMI32_ConnErrorMsg[] PROGMEM = "no Error|could not connect|did disconnect|got no service|got no characteristic|can not read|can not notify|can not write|did not write|notify time out";
 
 const char kMI32_BLEInfoMsg[] PROGMEM = "Scan ended|Got Notification|Did connect|Did disconnect|Still connected|Start passive scanning|Start active scanning|Server characteristic set|Server advertisement set|Server scan response set|Server client did connect|Server client did disconnect";
-
-const char kMI32_HKInfoMsg[] PROGMEM = "HAP core started|HAP core did not start!!|HAP controller disconnected|HAP controller connected|HAP outlet added";
 
 const char kMI32_ButtonMsg[] PROGMEM = "Single|Double|Hold"; //mapping: in Tasmota: 1,2,3 ; for HomeKit and Xiaomi 0,1,2
 /*********************************************************************************************\
@@ -473,14 +448,6 @@ enum MI32_BLEInfoMsg {
   MI32_SERV_CLIENT_DISCONNECTED
 };
 
-enum MI32_HKInfoMsg {
-  MI32_HAP_DID_START = 1,
-  MI32_HAP_DID_NOT_START,
-  MI32_HAP_CONTROLLER_DISCONNECTED,
-  MI32_HAP_CONTROLLER_CONNECTED,
-  MI32_HAP_OUTLET_ADDED
-};
-
 /*********************************************************************************************\
  * extended web gui
 \*********************************************************************************************/
@@ -490,29 +457,33 @@ enum MI32_HKInfoMsg {
 const char HTTP_BTN_MENU_MI32[] PROGMEM = "<p><form action='m32' method='get'><button>Mi Dashboard</button></form></p>";
 
 const char HTTP_MI32_SCRIPT_1[] PROGMEM =
-  "function setUp(){setInterval(countUp,1000); setInterval(update,100);}"
+  "function setUp(){setInterval(countUp,1000); setInterval(update,1000);}"
   "function countUp(){let ti=document.querySelectorAll('.Ti');"
   "for(const el of ti){var t=parseInt(el.innerText);el.innerText=t+1;}}"
-  "function update(){"         //source, value
-    "var xr=new XMLHttpRequest();"
-    "xr.onreadystatechange=()=>{"
-      "if(xr.readyState==4&&xr.status==200){"
-            "var r = xr.response;" // new widget
-            "if(r.length>2000){return;};if(r.length==0){return;}"
-            "var d = document.createElement('div');"
-            "d.innerHTML = r.trim();"
-            "var old = eb(d.firstChild.id);"
-            "old.parentNode.replaceChild(d.firstChild,old);"
-        "};"
-      "};"
-    "xr.open('GET','/m32?wi=1',true);"
-    "xr.send();"
-    "};"
-  ;
+  "function update(){"
+    "fetch('/m32?wi=1').then(r=>r.text())"
+    ".then((r)=>{"
+      // console.log(r); // optional
+      "if(r.length>0){"
+        "var d=document.createElement('div');"
+        "d.innerHTML=r.trim();"
+        "var old=eb(d.firstChild.id);"
+        "old.parentNode.replaceChild(d.firstChild, old);"
+      "}"
+    "})"
+    //".catch((e) => {console.error(e);});" //optional
+  "};"
+;
 
 const char HTTP_MI32_STYLE[] PROGMEM =
-  "<style onload=setTimeout(setUp,500)>.parent {display: flex;flex-wrap: wrap;justify-content: center;}svg{float:inline-end;}"
-  ".box {flex: 0 1 335px;margin: 5px;padding: 5px;border-radius: 0.8rem;background-color: rgba(221, 221, 221, 0.2);}</style>";
+  "<style onload=setTimeout(setUp,500)>body{display:flex;flex-direction:column;}"
+  ".parent{display:grid;grid-template-columns:repeat(auto-fill,350px);grid-template-rows:repeat(auto-fill,220px);"
+  "grid-auto-rows:220px;grid-auto-columns:350px;gap:1rem;justify-content:center;}"
+  "svg{float:inline-end;}"
+  ".box{padding:10px;border-radius:0.8rem;background-color:rgba(221, 221, 221, 0.2);}"
+  "@media screen and (min-width: 720px){.wide{grid-column:span 2;grid-row:span 1;}.big {grid-column:span 2;grid-row:span 2;}}"
+  ".tall {grid-column:span 1;grid-row:span 2;}"
+  "</style>";
 
 const char HTTP_MI32_STYLE_SVG[] PROGMEM =
   "<svg height='0'><defs><linearGradient id='grd%u'  x1='0%%' y1='0%%' x2='0%%' y2='15%%'>"
@@ -520,18 +491,15 @@ const char HTTP_MI32_STYLE_SVG[] PROGMEM =
   "<stop offset='1' stop-color='rgba(%u, %u, %u, 0)'/></linearGradient></defs></svg>"
   ;
 
+const char HTTP_MI32_PARENT_BLE_ROLE[] PROGMEM = "None|Observer|Peripheral|Central";
+
 const char HTTP_MI32_PARENT_START[] PROGMEM =
   "<div class='parent'>"
-      "<div class='box'><h2>MI32 Bridge</h2>"
-          "Observing <span id='numDev'>%u</span> devices<br>"
-          "Uptime: <span class='Ti'>%u</span> seconds<br>"
-#ifdef USE_MI_HOMEKIT
-          "HomeKit setup code: %s<br>"
-          "HAP controller connections: %d<br>"
-#else
-          "HomeKit not enabled%s<br>"
-#endif //USE_MI_HOMEKIT
-          "Free Heap: %u kB"
+      "<div class='box tall'><h2>MI32 Bridge</h2>"
+          "Observing <span id='numDev'>%u</span> devices<br><br>"
+          "Uptime: <span class='Ti'>%u</span> seconds<br><br>"
+          "Free Heap: %u kB<br><br>"
+          "BLE Role: %s"
       "</div>";
 
 const char HTTP_MI32_WIDGET[] PROGMEM =

@@ -23,11 +23,11 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
   // Other commands
   D_CMND_UPGRADE "|" D_CMND_UPLOAD "|" D_CMND_OTAURL "|" D_CMND_SERIALLOG "|" D_CMND_RESTART "|"
 #ifndef FIRMWARE_MINIMAL_ONLY
-  D_CMND_BACKLOG "|" D_CMND_DELAY "|" D_CMND_POWER "|" D_CMND_STATUS "|" D_CMND_STATE "|" D_CMND_SLEEP "|"
+  D_CMND_BACKLOG "|" D_CMND_DELAY "|" D_CMND_POWER "|" D_CMND_TIMEDPOWER "|" D_CMND_STATUS "|" D_CMND_STATE "|" D_CMND_SLEEP "|"
   D_CMND_POWERONSTATE "|" D_CMND_PULSETIME "|" D_CMND_BLINKTIME "|" D_CMND_BLINKCOUNT "|" D_CMND_SAVEDATA "|"
   D_CMND_SO "|" D_CMND_SETOPTION "|" D_CMND_TEMPERATURE_RESOLUTION "|" D_CMND_HUMIDITY_RESOLUTION "|" D_CMND_PRESSURE_RESOLUTION "|" D_CMND_POWER_RESOLUTION "|"
   D_CMND_VOLTAGE_RESOLUTION "|" D_CMND_FREQUENCY_RESOLUTION "|" D_CMND_CURRENT_RESOLUTION "|" D_CMND_ENERGY_RESOLUTION "|" D_CMND_WEIGHT_RESOLUTION "|"
-  D_CMND_MODULE "|" D_CMND_MODULES "|" D_CMND_GPIO "|" D_CMND_GPIOS "|" D_CMND_TEMPLATE "|" D_CMND_PWM "|" D_CMND_PWMFREQUENCY "|" D_CMND_PWMRANGE "|"
+  D_CMND_MODULE "|" D_CMND_MODULES "|" D_CMND_GPIO "|" D_CMND_GPIOREAD "|" D_CMND_GPIOS "|" D_CMND_TEMPLATE "|" D_CMND_PWM "|" D_CMND_PWMFREQUENCY "|" D_CMND_PWMRANGE "|"
   D_CMND_BUTTONDEBOUNCE "|" D_CMND_SWITCHDEBOUNCE "|" D_CMND_SYSLOG "|" D_CMND_LOGHOST "|" D_CMND_LOGPORT "|"
   D_CMND_SERIALBUFFER "|" D_CMND_SERIALSEND "|" D_CMND_BAUDRATE "|" D_CMND_SERIALCONFIG "|" D_CMND_SERIALDELIMITER "|"
   D_CMND_IPADDRESS "|" D_CMND_NTPSERVER "|" D_CMND_AP "|" D_CMND_SSID "|" D_CMND_PASSWORD "|" D_CMND_HOSTNAME "|" D_CMND_WIFICONFIG "|" D_CMND_WIFI "|" D_CMND_DNSTIMEOUT "|"
@@ -63,11 +63,11 @@ SO_SYNONYMS(kTasmotaSynonyms,
 void (* const TasmotaCommand[])(void) PROGMEM = {
   &CmndUpgrade, &CmndUpgrade, &CmndOtaUrl, &CmndSeriallog, &CmndRestart,
 #ifndef FIRMWARE_MINIMAL_ONLY
-  &CmndBacklog, &CmndDelay, &CmndPower, &CmndStatus, &CmndState, &CmndSleep,
+  &CmndBacklog, &CmndDelay, &CmndPower, &CmndTimedPower, &CmndStatus, &CmndState, &CmndSleep,
   &CmndPowerOnState, &CmndPulsetime, &CmndBlinktime, &CmndBlinkcount, &CmndSavedata,
   &CmndSetoption, &CmndSetoption, &CmndTemperatureResolution, &CmndHumidityResolution, &CmndPressureResolution, &CmndPowerResolution,
   &CmndVoltageResolution, &CmndFrequencyResolution, &CmndCurrentResolution, &CmndEnergyResolution, &CmndWeightResolution,
-  &CmndModule, &CmndModules, &CmndGpio, &CmndGpios, &CmndTemplate, &CmndPwm, &CmndPwmfrequency, &CmndPwmrange,
+  &CmndModule, &CmndModules, &CmndGpio, &CmndGpioRead, &CmndGpios, &CmndTemplate, &CmndPwm, &CmndPwmfrequency, &CmndPwmrange,
   &CmndButtonDebounce, &CmndSwitchDebounce, &CmndSyslog, &CmndLoghost, &CmndLogport,
   &CmndSerialBuffer, &CmndSerialSend, &CmndBaudrate, &CmndSerialConfig, &CmndSerialDelimiter,
   &CmndIpAddress, &CmndNtpServer, &CmndAp, &CmndSsid, &CmndPassword, &CmndHostname, &CmndWifiConfig, &CmndWifi, &CmndDnsTimeout,
@@ -249,15 +249,11 @@ void CmndWifiTest(void)
 #endif //USE_WEBSERVER
 }
 
-void CmndBatteryPercent(void) {
-  if (XdrvMailbox.payload > 101) XdrvMailbox.payload = 100;
-  if (XdrvMailbox.payload >= 0) {
-      Settings->battery_level_percent = XdrvMailbox.payload;
-  }
-  ResponseCmndNumber(Settings->battery_level_percent);
-}
-
 #endif  // not defined FIRMWARE_MINIMAL_ONLY
+
+void ResponseCmnd(void) {
+  Response_P(PSTR("{\"%s\":"), XdrvMailbox.command);
+}
 
 void ResponseCmndNumber(int value) {
   Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, value);
@@ -313,6 +309,7 @@ void ResponseCmndAll(uint32_t text_index, uint32_t count) {
 #ifdef MQTT_DATA_STRING
   for (uint32_t i = 0; i < count; i++) {
     if ((SET_MQTT_GRP_TOPIC == text_index) && (1 == i)) { real_index = SET_MQTT_GRP_TOPIC2 -1; }
+    if ((SET_BUTTON1 == text_index) && (16 == i)) { real_index = SET_BUTTON17 -16; }
     ResponseAppend_P(PSTR("%c\"%s%d\":\"%s\""), (i)?',':'{', XdrvMailbox.command, i +1, EscapeJSONString(SettingsText(real_index +i)).c_str());
   }
   ResponseJsonEnd();
@@ -498,8 +495,6 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len) {
   TasmotaGlobal.fallback_topic_flag = false;
 }
 
-/********************************************************************************************/
-
 void CmndBacklog(void) {
   // Backlog command1;command2;..   Execute commands in sequence with a delay in between set with SetOption34
   // Backlog0 command1;command2;..  Execute commands in sequence with no delay
@@ -510,14 +505,7 @@ void CmndBacklog(void) {
     }
 
     char *blcommand = strtok(XdrvMailbox.data, ";");
-#ifdef SUPPORT_IF_STATEMENT
-    while ((blcommand != nullptr) && (backlog.size() < MAX_BACKLOG))
-#else
-    uint32_t bl_pointer = (!TasmotaGlobal.backlog_pointer) ? MAX_BACKLOG -1 : TasmotaGlobal.backlog_pointer;
-    bl_pointer--;
-    while ((blcommand != nullptr) && (TasmotaGlobal.backlog_index != bl_pointer))
-#endif
-    {
+    while (blcommand != nullptr) {
       // Ignore semicolon (; = end of single command) between brackets {}
       char *next = strchr(blcommand, '\0') +1;  // Prepare for next ;
       while ((next != nullptr) && (ChrCount(blcommand, "{") != ChrCount(blcommand, "}"))) {  // Check for valid {} pair
@@ -536,17 +524,12 @@ void CmndBacklog(void) {
       }
       // Do not allow command Reset in backlog
       if ((*blcommand != '\0') && (strncasecmp_P(blcommand, PSTR(D_CMND_RESET), strlen(D_CMND_RESET)) != 0))  {
-#ifdef SUPPORT_IF_STATEMENT
-        if (backlog.size() < MAX_BACKLOG) {
-          backlog.add(blcommand);
+        char* temp = (char*)malloc(strlen(blcommand)+1);
+        if (temp != nullptr) {
+          strcpy(temp, blcommand);
+          char* &elem = backlog.addToLast();
+          elem = temp;
         }
-#else
-        TasmotaGlobal.backlog[TasmotaGlobal.backlog_index] = blcommand;
-        TasmotaGlobal.backlog_index++;
-        if (TasmotaGlobal.backlog_index >= MAX_BACKLOG) {
-          TasmotaGlobal.backlog_index = 0;
-        }
-#endif
       }
       blcommand = strtok(nullptr, ";");
     }
@@ -555,11 +538,10 @@ void CmndBacklog(void) {
     TasmotaGlobal.backlog_timer = millis();
   } else {
     bool blflag = BACKLOG_EMPTY;
-#ifdef SUPPORT_IF_STATEMENT
-    backlog.clear();
-#else
-    TasmotaGlobal.backlog_pointer = TasmotaGlobal.backlog_index;
-#endif
+    for (auto &elem : backlog) {
+      free(elem);
+      backlog.remove(&elem);
+    }
     ResponseCmndChar(blflag ? PSTR(D_JSON_EMPTY) : PSTR(D_JSON_ABORTED));
   }
 }
@@ -599,31 +581,6 @@ void CmndJson(void) {
     // {"template":"{\"NAME\":\"Dummy\",\"GPIO\":[320,0,321],\"FLAG\":0,\"BASE\":18}","power":2,"HSBColor":"51,97,100","Channel":[100,85,3]}
     // Output:
     // template {"NAME":"Dummy","GPIO":[320,0,321],"FLAG":0,"BASE":18};power 2;HSBColor 51,97,100;Channel1 100;Channel2 85;Channel3 3
-/*
-    String backlog;
-    for (auto command_key : root) {
-      const char *command = command_key.getStr();
-      JsonParserToken parameters = command_key.getValue();
-      if (parameters.isArray()) {
-        JsonParserArray parameter_arr = parameters.getArray();
-        uint32_t index = 1;
-        for (auto value : parameter_arr) {
-          backlog = command;
-          backlog += index++;
-          backlog += " ";
-          backlog += value.getStr();            // Channel1 100;Channel2 85;Channel3 3
-          ExecuteCommand((char*)backlog.c_str(), SRC_FILE);
-        }
-      } else if (parameters.isObject()) {       // Should have been escaped
-//        AddLog(LOG_LEVEL_DEBUG, PSTR("JSN: Object"));
-      } else {
-        backlog = command;
-        backlog += " ";
-        backlog += parameters.getStr();         // HSBColor 51,97,100
-        ExecuteCommand((char*)backlog.c_str(), SRC_FILE);
-      }
-    }
-*/
     String backlog;                             // We might need a larger string than XdrvMailbox.data_len accomodating decoded arrays
     for (auto command_key : root) {
       const char *command = command_key.getStr();
@@ -701,6 +658,123 @@ void CmndPower(void)
     ResponseClear();
   }
 }
+
+/********************************************************************************************/
+
+typedef struct {
+  uint32_t time;
+  char*    command;
+} tTimedCmnd;
+LList<tTimedCmnd> timed_cmnd;          // Timed command buffer
+
+bool SetTimedCmnd(uint32_t time, const char *command) {
+  // Remove command if present
+  for (auto &elem : timed_cmnd) {
+    if (strcmp(command, elem.command) == 0) {  // Equal
+      free(elem.command);
+      timed_cmnd.remove(&elem);
+      break;
+    }
+  }
+  // Add command
+  char* cmnd = (char*)malloc(strlen(command) +1);
+  if (cmnd) {
+    strcpy(cmnd, command);
+    tTimedCmnd &elem = timed_cmnd.addToLast();
+    elem.time = millis() + time;
+    elem.command = cmnd;
+    return true;
+  }
+  return false;
+}
+
+void ResetTimedCmnd(const char *command) {
+  for (auto &elem : timed_cmnd) {
+    if (strncmp(command, elem.command, strlen(command)) == 0) {  // StartsWith
+      free(elem.command);
+      timed_cmnd.remove(&elem);
+    }
+  }
+}
+
+void ShowTimedCmnd(const char *command) {
+  bool found = false;
+  uint32_t now = millis();
+  ResponseCmnd();     // {"TimedPower":
+  for (auto &elem : timed_cmnd) {
+    if (strncmp(command, elem.command, strlen(command)) == 0) {  // StartsWith
+      ResponseAppend_P(PSTR("%s{\"" D_JSON_REMAINING "\":%d,\"" D_JSON_COMMAND "\":\"%s\"}"),
+        (found) ? "," : "[", elem.time - now, elem.command);
+      found = true;
+    }
+  }
+  ResponseAppend_P((found) ? PSTR("]}") : PSTR("\"" D_JSON_EMPTY "\"}"));
+}
+
+void LoopTimedCmnd(void) {
+  for (auto &elem : timed_cmnd) {
+    if (TimeReached(elem.time)) {
+      char* command = elem.command;
+      timed_cmnd.remove(&elem);
+      ExecuteCommand(command, SRC_TIMER);
+      free(command);
+    }
+  }
+}
+
+/*------------------------------------------------------------------------------------------*/
+
+void CmndTimedPower(void) {
+  /*
+  Allow timed power changes on a 50ms granularity
+  TimedPower<index> <milliseconds>[,0|1|2|3]
+  TimedPower                 - Show remaining timers
+  TimedPower 2000            - Turn power1 on and then off after 2 seconds
+  TimedPower1                - Clear active Power1 timers
+  TimedPower1 0              - Stop timer and perform timed action
+  TimedPower0 3000           - Turn all power on and then off after 3 seconds
+  TimedPower1 2000           - Turn power1 on and then off after 2 seconds
+  TimedPower2 2000,0|off     - Turn power2 off and then on after 2 seconds
+  TimedPower1 2200,1|on      - Turn power1 on and then off after 2.2 seconds
+  TimedPower2 2000,2|toggle  - Toggle power2 and then toggle again after 2 seconds
+  TimedPower2 2500,3|blink   - Blink power2 and then stop blink after 2.5 seconds
+  */
+  if ((XdrvMailbox.index >= 0) && (XdrvMailbox.index <= TasmotaGlobal.devices_present)) {
+    if (XdrvMailbox.data_len > 0) {
+      uint32_t time = (XdrvMailbox.payload < 50) ? 50 : XdrvMailbox.payload;
+      int start_state = POWER_ON;               // Default on
+      if (ArgC() > 1) {
+        char state_text[XdrvMailbox.data_len];
+        ArgV(state_text, 2);
+        start_state = GetStateNumber(Trim(state_text));
+        if (start_state < 0) {
+          start_state = atoi(state_text);
+        }
+        start_state &= 0x03;                    // POWER_OFF, POWER_ON, POWER_TOGGLE, POWER_BLINK
+      }
+      const uint8_t end_state[] = { POWER_ON, POWER_OFF, POWER_TOGGLE, POWER_BLINK_STOP };
+      char cmnd[CMDSZ];
+      snprintf_P(cmnd, sizeof(cmnd), PSTR(D_CMND_POWER "%d %d"), XdrvMailbox.index, end_state[start_state]);
+      if (SetTimedCmnd(time, cmnd)) {           // Skip if no more room for timers
+        XdrvMailbox.payload = start_state;
+        CmndPower();
+      }
+    } else {
+      if (!XdrvMailbox.usridx) {
+//        ResetTimedCmnd(D_CMND_POWER);           // Remove all POWER timed command
+        ShowTimedCmnd(D_CMND_POWER);            // Show remaining timers
+        return;
+      } else {
+        char cmnd[CMDSZ];
+        snprintf_P(cmnd, sizeof(cmnd), PSTR(D_CMND_POWER "%d"), XdrvMailbox.index);
+        ResetTimedCmnd(cmnd);                   // Remove POWER<index> timed command 
+      }
+      ResponseCmndDone();
+    }
+  }
+}
+
+/********************************************************************************************/
 
 void CmndStatusResponse(uint32_t index) {
   static String all_status = (const char*) nullptr;
@@ -1775,6 +1849,27 @@ void CmndGpio(void)
   }
 }
 
+void CmndGpioRead(void) {
+  // Perform a digitalRead on each configured GPIO
+  myio template_gp;
+  TemplateGpios(&template_gp);
+  bool jsflg = false;
+  Response_P(PSTR("{\"" D_CMND_GPIOREAD "\":{"));
+  for (uint32_t i = 0; i < nitems(Settings->my_gp.io); i++) {
+    uint32_t sensor_type = template_gp.io[i];    // Template GPIO
+    if (((sensor_type != GPIO_NONE) && (AGPIO(GPIO_USER) != sensor_type)) ||
+        (Settings->my_gp.io[i] != GPIO_NONE)) {  // Module GPIO
+      if (jsflg) {
+        ResponseAppend_P(PSTR(","));
+      }
+      jsflg = true;
+      bool state = digitalRead(i);
+      ResponseAppend_P(PSTR("\"" D_CMND_GPIO "%d\":%d"), i, state);
+    }
+  }
+  ResponseAppend_P(PSTR("}}"));
+}
+
 void ShowGpios(const uint16_t *NiceList, uint32_t size, uint32_t offset, uint32_t &lines) {
   uint32_t ridx;
   uint32_t midx;
@@ -2600,6 +2695,18 @@ void CmndDnsTimeout(void) {
     Settings->dns_timeout = XdrvMailbox.payload;
   }
   ResponseCmndNumber(Settings->dns_timeout);
+}
+
+void UpdateBatteryPercent(int batt_percentage) {
+  if (batt_percentage > 101) { batt_percentage = 100; }
+  if (batt_percentage >= 0) {
+    Settings->battery_level_percent = batt_percentage;
+  }
+}
+
+void CmndBatteryPercent(void) {
+  UpdateBatteryPercent(XdrvMailbox.payload);
+  ResponseCmndNumber(Settings->battery_level_percent);
 }
 
 #ifdef USE_I2C

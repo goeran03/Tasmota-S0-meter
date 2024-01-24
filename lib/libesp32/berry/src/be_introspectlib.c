@@ -96,7 +96,7 @@ static int m_findmember(bvm *vm)
 static int m_setmember(bvm *vm)
 {
     int top = be_top(vm);
-    if (top >= 3 && (be_isinstance(vm, 1) || be_ismodule(vm, 1)) && be_isstring(vm, 2)) {
+    if (top >= 3 && (be_isinstance(vm, 1) || be_ismodule(vm, 1) || be_isclass(vm, 1)) && be_isstring(vm, 2)) {
         be_setmember(vm, 1, be_tostring(vm, 2));
         be_return(vm);
     }
@@ -108,7 +108,10 @@ static int m_toptr(bvm *vm)
     int top = be_top(vm);
     if (top >= 1) {
         bvalue *v = be_indexof(vm, 1);
-        if (var_basetype(v) >= BE_FUNCTION || var_type(v) == BE_COMPTR) {
+        if (var_type(v) == BE_STRING) {
+            be_pushcomptr(vm, be_tostring(vm, 1));
+            be_return(vm);
+        } else if (var_basetype(v) >= BE_FUNCTION || var_type(v) == BE_COMPTR) {
             be_pushcomptr(vm, var_toobj(v));
             be_return(vm);
         } else if (var_type(v) == BE_INT) {

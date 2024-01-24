@@ -643,6 +643,10 @@ BERRY_API bbool be_setmember(bvm *vm, int index, const char *k)
         bstring *key = be_newstr(vm, k);
         bmodule *mod = var_toobj(o);
         return be_module_setmember(vm, mod, key, v);
+    } else if (var_isclass(o)) {
+        bstring *key = be_newstr(vm, k);
+        bclass *cl = var_toobj(o);
+        return be_class_setmember(vm, cl, key, v);
     }
     return bfalse;
 }
@@ -727,10 +731,13 @@ BERRY_API bbool be_getindex(bvm *vm, int index)
 static bvalue* list_setindex(blist *list, bvalue *key)
 {
     int idx = var_toidx(key);
-    if (idx < be_list_count(list)) {
-        return be_list_at(list, idx);
+    if (idx < 0) {
+        idx = list->count + idx;
     }
-    return NULL;
+    if (idx < 0 || idx >= list->count) {
+        return NULL;
+    }
+    return be_list_at(list, idx);
 }
 
 BERRY_API bbool be_setindex(bvm *vm, int index)

@@ -25,7 +25,7 @@ import matter
 
 class Matter_Plugin_Root : Matter_Plugin
   static var TYPE = "root"            # name of the plug-in in json
-  static var NAME = "Root node"       # display name of the plug-in
+  static var DISPLAY_NAME = "Root node"       # display name of the plug-in
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
     # 0x001D: inherited               # Descriptor Cluster 9.5 p.453
     0x001F: [0,2,3,4],                # Access Control Cluster, p.461
@@ -158,7 +158,7 @@ class Matter_Plugin_Root : Matter_Plugin
           var nocs = nocl.add_struct(nil)
           nocs.add_TLV(1, TLV.B2, loc_fabric.get_noc())      # NOC
           nocs.add_TLV(2, TLV.B2, loc_fabric.get_icac())     # ICAC
-          nocs.add_TLV(0xFE, TLV.U2, loc_fabric.get_fabric_index())    # Label
+          nocs.add_TLV(matter.AGGREGATOR_ENDPOINT, TLV.U2, loc_fabric.get_fabric_index())    # Label
         end
         return nocl
       elif attribute == 0x0001          #  ---------- Fabrics / list[FabricDescriptorStruct] ----------
@@ -183,7 +183,7 @@ class Matter_Plugin_Root : Matter_Plugin
         return tlv_solo.set(TLV.U1, fabric_actice)  # number of active fabrics
       elif attribute == 0x0004          #  ---------- TrustedRootCertificates / list[octstr] ----------
         # TODO
-      elif attribute == 0x0005          #  ---------- Current­ FabricIndex / u1 ----------
+      elif attribute == 0x0005          #  ---------- Current FabricIndex / u1 ----------
         var fab_index = session._fabric.get_fabric_index()
         if fab_index == nil   fab_index = 0   end     # if PASE session, then the fabric index should be zero
         return tlv_solo.set(TLV.U1, fab_index)      # number of active sessions
@@ -312,7 +312,7 @@ class Matter_Plugin_Root : Matter_Plugin
         var disable_bridge_mode = self.device.disable_bridge_mode
         for ep: eps
           # if bridge mode is disabled, don't announce Aggregatore (above 0xFF00)
-          if !disable_bridge_mode || ep < 0xFF00
+          if !disable_bridge_mode || ep < matter.AGGREGATOR_ENDPOINT
             pl.add_TLV(nil, TLV.U2, ep)     # add each endpoint
           end
         end

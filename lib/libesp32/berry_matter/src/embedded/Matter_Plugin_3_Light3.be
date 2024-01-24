@@ -25,7 +25,7 @@ import matter
 
 class Matter_Plugin_Light3 : Matter_Plugin_Light1
   static var TYPE = "light3"                                # name of the plug-in in json
-  static var NAME = "Light 3 RGB"                           # display name of the plug-in
+  static var DISPLAY_NAME = "Light 3 RGB"                           # display name of the plug-in
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
     # 0x001D: inherited                                     # Descriptor Cluster 9.5 p.453
     # 0x0003: inherited                                     # Identify 1.2 p.16
@@ -35,6 +35,7 @@ class Matter_Plugin_Light3 : Matter_Plugin_Light1
     # 0x0008: inherited                                     # Level Control 1.6 p.57
     0x0300: [0,1,7,8,0xF,0x4001,0x400A,0xFFFC,0xFFFD],# Color Control 3.2 p.111
   })
+  static var UPDATE_COMMANDS = matter.UC_LIST(_class, "Hue", "Sat")
   static var TYPES = { 0x010D: 2 }                  # Extended Color Light
 
   # Inherited
@@ -62,7 +63,7 @@ class Matter_Plugin_Light3 : Matter_Plugin_Light1
   #
   def update_shadow()
     super(self).update_shadow()
-    if !self.virtual
+    if !self.VIRTUAL
       import light
       var light_status = light.get()
       if light_status != nil
@@ -92,7 +93,7 @@ class Matter_Plugin_Light3 : Matter_Plugin_Light1
       if sat_254 > 254    sat_254 = 254   end
     end
 
-    if !self.virtual
+    if !self.VIRTUAL
       var hue_360 = (hue_254 != nil) ? tasmota.scale_uint(hue_254, 0, 254, 0, 360) : nil
       var sat_255 = (sat_254 != nil) ? tasmota.scale_uint(sat_254, 0, 254, 0, 255) : nil
 
@@ -209,6 +210,19 @@ class Matter_Plugin_Light3 : Matter_Plugin_Light1
       return super(self).invoke_request(session, val, ctx)
     end
 
+  end
+
+  #############################################################
+  # update_virtual
+  #
+  # Update internal state for virtual devices
+  def update_virtual(payload_json)
+    var val_hue = int(payload_json.find("Hue"))         # int or nil
+    var val_sat = int(payload_json.find("Sat"))         # int or nil
+    if (val_hue != nil) || (val_sat != nil)
+      self.set_hue_sat(val_hue, val_sat)
+    end
+    super(self).update_virtual(payload_json)
   end
 
 end

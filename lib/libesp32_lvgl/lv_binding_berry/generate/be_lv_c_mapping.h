@@ -80,6 +80,7 @@ const be_ntv_func_def_t lv_style_func[] = {
   { "set_min_height", { (const void*) &lv_style_set_min_height, "", "(lv.lv_style)i" } },
   { "set_min_width", { (const void*) &lv_style_set_min_width, "", "(lv.lv_style)i" } },
   { "set_opa", { (const void*) &lv_style_set_opa, "", "(lv.lv_style)i" } },
+  { "set_opa_layered", { (const void*) &lv_style_set_opa_layered, "", "(lv.lv_style)i" } },
   { "set_outline_color", { (const void*) &lv_style_set_outline_color, "", "(lv.lv_style)(lv.lv_color)" } },
   { "set_outline_opa", { (const void*) &lv_style_set_outline_opa, "", "(lv.lv_style)i" } },
   { "set_outline_pad", { (const void*) &lv_style_set_outline_pad, "", "(lv.lv_style)i" } },
@@ -306,6 +307,8 @@ const be_ntv_func_def_t lv_obj_func[] = {
   { "get_style_min_height", { (const void*) &lv_obj_get_style_min_height, "i", "(lv.lv_obj)i" } },
   { "get_style_min_width", { (const void*) &lv_obj_get_style_min_width, "i", "(lv.lv_obj)i" } },
   { "get_style_opa", { (const void*) &lv_obj_get_style_opa, "i", "(lv.lv_obj)i" } },
+  { "get_style_opa_layered", { (const void*) &lv_obj_get_style_opa_layered, "i", "(lv.lv_obj)i" } },
+  { "get_style_opa_recursive", { (const void*) &lv_obj_get_style_opa_recursive, "i", "(lv.lv_obj)i" } },
   { "get_style_outline_color", { (const void*) &lv_obj_get_style_outline_color, "lv.lv_color", "(lv.lv_obj)i" } },
   { "get_style_outline_color_filtered", { (const void*) &lv_obj_get_style_outline_color_filtered, "lv.lv_color", "(lv.lv_obj)i" } },
   { "get_style_outline_opa", { (const void*) &lv_obj_get_style_outline_opa, "i", "(lv.lv_obj)i" } },
@@ -340,6 +343,7 @@ const be_ntv_func_def_t lv_obj_func[] = {
   { "get_style_transform_pivot_y", { (const void*) &lv_obj_get_style_transform_pivot_y, "i", "(lv.lv_obj)i" } },
   { "get_style_transform_width", { (const void*) &lv_obj_get_style_transform_width, "i", "(lv.lv_obj)i" } },
   { "get_style_transform_zoom", { (const void*) &lv_obj_get_style_transform_zoom, "i", "(lv.lv_obj)i" } },
+  { "get_style_transform_zoom_safe", { (const void*) &lv_obj_get_style_transform_zoom_safe, "i", "(lv.lv_obj)i" } },
   { "get_style_transition", { (const void*) &lv_obj_get_style_transition, "lv.lv_style_transition_dsc", "(lv.lv_obj)i" } },
   { "get_style_translate_x", { (const void*) &lv_obj_get_style_translate_x, "i", "(lv.lv_obj)i" } },
   { "get_style_translate_y", { (const void*) &lv_obj_get_style_translate_y, "i", "(lv.lv_obj)i" } },
@@ -483,6 +487,7 @@ const be_ntv_func_def_t lv_obj_func[] = {
   { "set_style_min_height", { (const void*) &lv_obj_set_style_min_height, "", "(lv.lv_obj)ii" } },
   { "set_style_min_width", { (const void*) &lv_obj_set_style_min_width, "", "(lv.lv_obj)ii" } },
   { "set_style_opa", { (const void*) &lv_obj_set_style_opa, "", "(lv.lv_obj)ii" } },
+  { "set_style_opa_layered", { (const void*) &lv_obj_set_style_opa_layered, "", "(lv.lv_obj)ii" } },
   { "set_style_outline_color", { (const void*) &lv_obj_set_style_outline_color, "", "(lv.lv_obj)(lv.lv_color)i" } },
   { "set_style_outline_opa", { (const void*) &lv_obj_set_style_outline_opa, "", "(lv.lv_obj)ii" } },
   { "set_style_outline_pad", { (const void*) &lv_obj_set_style_outline_pad, "", "(lv.lv_obj)ii" } },
@@ -524,6 +529,8 @@ const be_ntv_func_def_t lv_obj_func[] = {
   { "set_style_width", { (const void*) &lv_obj_set_style_width, "", "(lv.lv_obj)ii" } },
   { "set_style_x", { (const void*) &lv_obj_set_style_x, "", "(lv.lv_obj)ii" } },
   { "set_style_y", { (const void*) &lv_obj_set_style_y, "", "(lv.lv_obj)ii" } },
+  { "set_tile", { (const void*) &lv_obj_set_tile, "", "(lv.lv_obj)(lv.lv_obj)i" } },
+  { "set_tile_id", { (const void*) &lv_obj_set_tile_id, "", "(lv.lv_obj)iii" } },
   { "set_user_data", { (const void*) &lv_obj_set_user_data, "", "(lv.lv_obj)." } },
   { "set_width", { (const void*) &lv_obj_set_width, "", "(lv.lv_obj)i" } },
   { "set_x", { (const void*) &lv_obj_set_x, "", "(lv.lv_obj)i" } },
@@ -556,7 +563,7 @@ const be_ntv_func_def_t lv_group_func[] = {
   { "set_edge_cb", { (const void*) &lv_group_set_edge_cb, "", "(lv.lv_group)^lv_group_edge_cb^" } },
   { "set_editing", { (const void*) &lv_group_set_editing, "", "(lv.lv_group)b" } },
   { "set_focus_cb", { (const void*) &lv_group_set_focus_cb, "", "(lv.lv_group)^lv_group_focus_cb^" } },
-  { "set_refocus_policy", { (const void*) &lv_group_set_refocus_policy, "", "(lv.lv_group)(lv.lv_group_refocus_policy)" } },
+  { "set_refocus_policy", { (const void*) &lv_group_set_refocus_policy, "", "(lv.lv_group)i" } },
   { "set_wrap", { (const void*) &lv_group_set_wrap, "", "(lv.lv_group)b" } },
   { "swap_obj", { (const void*) &lv_group_swap_obj, "", "(lv.lv_obj)(lv.lv_obj)" } },
 };
@@ -646,10 +653,46 @@ const be_ntv_func_def_t lv_colorwheel_func[] = {
 /* `lv_imgbtn` methods */
 #ifdef BE_LV_WIDGET_IMGBTN
 const be_ntv_func_def_t lv_imgbtn_func[] = {
-  { "set_src", { (const void*) &lv_imgbtn_set_src, "", "(lv.lv_obj)(lv.lv_imgbtn_state)..." } },
-  { "set_state", { (const void*) &lv_imgbtn_set_state, "", "(lv.lv_obj)(lv.lv_imgbtn_state)" } },
+  { "set_src", { (const void*) &lv_imgbtn_set_src, "", "(lv.lv_obj)i..." } },
+  { "set_state", { (const void*) &lv_imgbtn_set_state, "", "(lv.lv_obj)i" } },
 };
 #endif // BE_LV_WIDGET_IMGBTN
+
+/* `lv_keyboard` methods */
+#ifdef BE_LV_WIDGET_KEYBOARD
+const be_ntv_func_def_t lv_keyboard_func[] = {
+  { "get_btn_text", { (const void*) &lv_keyboard_get_btn_text, "s", "(lv.lv_obj)i" } },
+  { "get_map_array", { (const void*) &lv_keyboard_get_map_array, "c", "(lv.lv_obj)" } },
+  { "get_mode", { (const void*) &lv_keyboard_get_mode, "i", "(lv.lv_obj)" } },
+  { "get_selected_btn", { (const void*) &lv_keyboard_get_selected_btn, "i", "(lv.lv_obj)" } },
+  { "get_textarea", { (const void*) &lv_keyboard_get_textarea, "lv.lv_obj", "(lv.lv_obj)" } },
+  { "set_map", { (const void*) &lv_keyboard_set_map, "", "(lv.lv_obj)i(lv.str_arr)(lv.lv_btnmatrix_ctrl)" } },
+  { "set_mode", { (const void*) &lv_keyboard_set_mode, "", "(lv.lv_obj)i" } },
+  { "set_popovers", { (const void*) &lv_keyboard_set_popovers, "", "(lv.lv_obj)b" } },
+  { "set_textarea", { (const void*) &lv_keyboard_set_textarea, "", "(lv.lv_obj)(lv.lv_obj)" } },
+};
+#endif // BE_LV_WIDGET_KEYBOARD
+
+/* `lv_btnmatrix` methods */
+#ifdef BE_LV_WIDGET_BTNMATRIX
+const be_ntv_func_def_t lv_btnmatrix_func[] = {
+  { "clear_btn_ctrl", { (const void*) &lv_btnmatrix_clear_btn_ctrl, "", "(lv.lv_obj)ii" } },
+  { "clear_btn_ctrl_all", { (const void*) &lv_btnmatrix_clear_btn_ctrl_all, "", "(lv.lv_obj)i" } },
+  { "get_btn_text", { (const void*) &lv_btnmatrix_get_btn_text, "s", "(lv.lv_obj)i" } },
+  { "get_map", { (const void*) &lv_btnmatrix_get_map, "c", "(lv.lv_obj)" } },
+  { "get_one_checked", { (const void*) &lv_btnmatrix_get_one_checked, "b", "(lv.lv_obj)" } },
+  { "get_popovers", { (const void*) &lv_btnmatrix_get_popovers, "b", "(lv.lv_obj)" } },
+  { "get_selected_btn", { (const void*) &lv_btnmatrix_get_selected_btn, "i", "(lv.lv_obj)" } },
+  { "has_btn_ctrl", { (const void*) &lv_btnmatrix_has_btn_ctrl, "b", "(lv.lv_obj)ii" } },
+  { "set_btn_ctrl", { (const void*) &lv_btnmatrix_set_btn_ctrl, "", "(lv.lv_obj)ii" } },
+  { "set_btn_ctrl_all", { (const void*) &lv_btnmatrix_set_btn_ctrl_all, "", "(lv.lv_obj)i" } },
+  { "set_btn_width", { (const void*) &lv_btnmatrix_set_btn_width, "", "(lv.lv_obj)ii" } },
+  { "set_ctrl_map", { (const void*) &lv_btnmatrix_set_ctrl_map, "", "(lv.lv_obj)(lv.lv_btnmatrix_ctrl)" } },
+  { "set_map", { (const void*) &lv_btnmatrix_set_map, "", "(lv.lv_obj)(lv.str_arr)" } },
+  { "set_one_checked", { (const void*) &lv_btnmatrix_set_one_checked, "", "(lv.lv_obj)b" } },
+  { "set_selected_btn", { (const void*) &lv_btnmatrix_set_selected_btn, "", "(lv.lv_obj)i" } },
+};
+#endif // BE_LV_WIDGET_BTNMATRIX
 
 /* `lv_led` methods */
 #ifdef BE_LV_WIDGET_LED
@@ -662,6 +705,15 @@ const be_ntv_func_def_t lv_led_func[] = {
   { "toggle", { (const void*) &lv_led_toggle, "", "(lv.lv_obj)" } },
 };
 #endif // BE_LV_WIDGET_LED
+
+/* `lv_list` methods */
+#ifdef BE_LV_WIDGET_LIST
+const be_ntv_func_def_t lv_list_func[] = {
+  { "add_btn", { (const void*) &lv_list_add_btn, "lv.lv_obj", "(lv.lv_obj).s" } },
+  { "add_text", { (const void*) &lv_list_add_text, "lv.lv_obj", "(lv.lv_obj)s" } },
+  { "get_btn_text", { (const void*) &lv_list_get_btn_text, "s", "(lv.lv_obj)(lv.lv_obj)" } },
+};
+#endif // BE_LV_WIDGET_LIST
 
 /* `lv_meter` methods */
 #ifdef BE_LV_WIDGET_METER
@@ -720,6 +772,26 @@ const be_ntv_func_def_t lv_spinbox_func[] = {
 const be_ntv_func_def_t lv_spinner_func[] = {
 };
 #endif // BE_LV_WIDGET_SPINNER
+
+/* `lv_tabview` methods */
+#ifdef BE_LV_WIDGET_TABVIEW
+const be_ntv_func_def_t lv_tabview_func[] = {
+  { "add_tab", { (const void*) &lv_tabview_add_tab, "lv.lv_obj", "(lv.lv_obj)s" } },
+  { "get_content", { (const void*) &lv_tabview_get_content, "lv.lv_obj", "(lv.lv_obj)" } },
+  { "get_tab_act", { (const void*) &lv_tabview_get_tab_act, "i", "(lv.lv_obj)" } },
+  { "get_tab_btns", { (const void*) &lv_tabview_get_tab_btns, "lv.lv_obj", "(lv.lv_obj)" } },
+  { "rename_tab", { (const void*) &lv_tabview_rename_tab, "", "(lv.lv_obj)is" } },
+  { "set_act", { (const void*) &lv_tabview_set_act, "", "(lv.lv_obj)ii" } },
+};
+#endif // BE_LV_WIDGET_TABVIEW
+
+/* `lv_tileview` methods */
+#ifdef BE_LV_WIDGET_TILEVIEW
+const be_ntv_func_def_t lv_tileview_func[] = {
+  { "add_tile", { (const void*) &lv_tileview_add_tile, "lv.lv_obj", "(lv.lv_obj)iii" } },
+  { "get_tile_act", { (const void*) &lv_tileview_get_tile_act, "lv.lv_obj", "(lv.lv_obj)" } },
+};
+#endif // BE_LV_WIDGET_TILEVIEW
 
 /* `lv_anim` methods */
 const be_ntv_func_def_t lv_anim_func[] = {
@@ -809,26 +881,6 @@ const be_ntv_func_def_t lv_bar_func[] = {
 const be_ntv_func_def_t lv_btn_func[] = {
 };
 #endif // BE_LV_WIDGET_BTN
-
-/* `lv_btnmatrix` methods */
-#ifdef BE_LV_WIDGET_BTNMATRIX
-const be_ntv_func_def_t lv_btnmatrix_func[] = {
-  { "clear_btn_ctrl", { (const void*) &lv_btnmatrix_clear_btn_ctrl, "", "(lv.lv_obj)i(lv.lv_btnmatrix_ctrl)" } },
-  { "clear_btn_ctrl_all", { (const void*) &lv_btnmatrix_clear_btn_ctrl_all, "", "(lv.lv_obj)(lv.lv_btnmatrix_ctrl)" } },
-  { "get_btn_text", { (const void*) &lv_btnmatrix_get_btn_text, "s", "(lv.lv_obj)i" } },
-  { "get_map", { (const void*) &lv_btnmatrix_get_map, "c", "(lv.lv_obj)" } },
-  { "get_one_checked", { (const void*) &lv_btnmatrix_get_one_checked, "b", "(lv.lv_obj)" } },
-  { "get_selected_btn", { (const void*) &lv_btnmatrix_get_selected_btn, "i", "(lv.lv_obj)" } },
-  { "has_btn_ctrl", { (const void*) &lv_btnmatrix_has_btn_ctrl, "b", "(lv.lv_obj)i(lv.lv_btnmatrix_ctrl)" } },
-  { "set_btn_ctrl", { (const void*) &lv_btnmatrix_set_btn_ctrl, "", "(lv.lv_obj)i(lv.lv_btnmatrix_ctrl)" } },
-  { "set_btn_ctrl_all", { (const void*) &lv_btnmatrix_set_btn_ctrl_all, "", "(lv.lv_obj)(lv.lv_btnmatrix_ctrl)" } },
-  { "set_btn_width", { (const void*) &lv_btnmatrix_set_btn_width, "", "(lv.lv_obj)ii" } },
-  { "set_ctrl_map", { (const void*) &lv_btnmatrix_set_ctrl_map, "", "(lv.lv_obj)(lv.lv_btnmatrix_ctrl)" } },
-  { "set_map", { (const void*) &lv_btnmatrix_set_map, "", "(lv.lv_obj)(lv.str_arr)" } },
-  { "set_one_checked", { (const void*) &lv_btnmatrix_set_one_checked, "", "(lv.lv_obj)b" } },
-  { "set_selected_btn", { (const void*) &lv_btnmatrix_set_selected_btn, "", "(lv.lv_obj)i" } },
-};
-#endif // BE_LV_WIDGET_BTNMATRIX
 
 /* `lv_canvas` methods */
 #ifdef BE_LV_WIDGET_CANVAS
@@ -930,7 +982,7 @@ const be_ntv_func_def_t lv_roller_func[] = {
   { "get_options", { (const void*) &lv_roller_get_options, "s", "(lv.lv_obj)" } },
   { "get_selected", { (const void*) &lv_roller_get_selected, "i", "(lv.lv_obj)" } },
   { "get_selected_str", { (const void*) &lv_roller_get_selected_str, "", "(lv.lv_obj)ci" } },
-  { "set_options", { (const void*) &lv_roller_set_options, "", "(lv.lv_obj)s(lv.lv_roller_mode)" } },
+  { "set_options", { (const void*) &lv_roller_set_options, "", "(lv.lv_obj)si" } },
   { "set_selected", { (const void*) &lv_roller_set_selected, "", "(lv.lv_obj)ii" } },
   { "set_visible_row_count", { (const void*) &lv_roller_set_visible_row_count, "", "(lv.lv_obj)i" } },
 };
@@ -961,14 +1013,16 @@ const be_ntv_func_def_t lv_switch_func[] = {
 /* `lv_table` methods */
 #ifdef BE_LV_WIDGET_TABLE
 const be_ntv_func_def_t lv_table_func[] = {
-  { "add_cell_ctrl", { (const void*) &lv_table_add_cell_ctrl, "", "(lv.lv_obj)ii(lv.lv_table_cell_ctrl)" } },
-  { "clear_cell_ctrl", { (const void*) &lv_table_clear_cell_ctrl, "", "(lv.lv_obj)ii(lv.lv_table_cell_ctrl)" } },
+  { "add_cell_ctrl", { (const void*) &lv_table_add_cell_ctrl, "", "(lv.lv_obj)iii" } },
+  { "clear_cell_ctrl", { (const void*) &lv_table_clear_cell_ctrl, "", "(lv.lv_obj)iii" } },
+  { "get_cell_user_data", { (const void*) &lv_table_get_cell_user_data, ".", "(lv.lv_obj)ii" } },
   { "get_cell_value", { (const void*) &lv_table_get_cell_value, "s", "(lv.lv_obj)ii" } },
   { "get_col_cnt", { (const void*) &lv_table_get_col_cnt, "i", "(lv.lv_obj)" } },
   { "get_col_width", { (const void*) &lv_table_get_col_width, "i", "(lv.lv_obj)i" } },
   { "get_row_cnt", { (const void*) &lv_table_get_row_cnt, "i", "(lv.lv_obj)" } },
   { "get_selected_cell", { (const void*) &lv_table_get_selected_cell, "", "(lv.lv_obj)(lv.uint16)(lv.uint16)" } },
-  { "has_cell_ctrl", { (const void*) &lv_table_has_cell_ctrl, "b", "(lv.lv_obj)ii(lv.lv_table_cell_ctrl)" } },
+  { "has_cell_ctrl", { (const void*) &lv_table_has_cell_ctrl, "b", "(lv.lv_obj)iii" } },
+  { "set_cell_user_data", { (const void*) &lv_table_set_cell_user_data, "", "(lv.lv_obj)ii." } },
   { "set_cell_value", { (const void*) &lv_table_set_cell_value, "", "(lv.lv_obj)iis" } },
   { "set_cell_value_fmt", { (const void*) &lv_table_set_cell_value_fmt, "", "(lv.lv_obj)iis[......]" } },
   { "set_col_cnt", { (const void*) &lv_table_set_col_cnt, "", "(lv.lv_obj)i" } },
@@ -1035,9 +1089,11 @@ extern const bclass be_class_lv_group;
 extern const bclass be_class_lv_img;
 extern const bclass be_class_lv_imgbtn;
 extern const bclass be_class_lv_indev;
+extern const bclass be_class_lv_keyboard;
 extern const bclass be_class_lv_label;
 extern const bclass be_class_lv_led;
 extern const bclass be_class_lv_line;
+extern const bclass be_class_lv_list;
 extern const bclass be_class_lv_meter;
 extern const bclass be_class_lv_msgbox;
 extern const bclass be_class_lv_obj;
@@ -1049,8 +1105,10 @@ extern const bclass be_class_lv_spinner;
 extern const bclass be_class_lv_style;
 extern const bclass be_class_lv_switch;
 extern const bclass be_class_lv_table;
+extern const bclass be_class_lv_tabview;
 extern const bclass be_class_lv_textarea;
 extern const bclass be_class_lv_theme;
+extern const bclass be_class_lv_tileview;
 extern const bclass be_class_lv_timer;
 
 
@@ -1095,6 +1153,9 @@ const be_ntv_class_def_t lv_classes[] = {
   { "lv_imgbtn", &be_class_lv_imgbtn, lv_imgbtn_func, sizeof(lv_imgbtn_func) / sizeof(lv_imgbtn_func[0]) },
 #endif // BE_LV_WIDGET_IMGBTN
   { "lv_indev", &be_class_lv_indev, lv_indev_func, sizeof(lv_indev_func) / sizeof(lv_indev_func[0]) },
+#ifdef BE_LV_WIDGET_KEYBOARD
+  { "lv_keyboard", &be_class_lv_keyboard, lv_keyboard_func, sizeof(lv_keyboard_func) / sizeof(lv_keyboard_func[0]) },
+#endif // BE_LV_WIDGET_KEYBOARD
 #ifdef BE_LV_WIDGET_LABEL
   { "lv_label", &be_class_lv_label, lv_label_func, sizeof(lv_label_func) / sizeof(lv_label_func[0]) },
 #endif // BE_LV_WIDGET_LABEL
@@ -1104,6 +1165,9 @@ const be_ntv_class_def_t lv_classes[] = {
 #ifdef BE_LV_WIDGET_LINE
   { "lv_line", &be_class_lv_line, lv_line_func, sizeof(lv_line_func) / sizeof(lv_line_func[0]) },
 #endif // BE_LV_WIDGET_LINE
+#ifdef BE_LV_WIDGET_LIST
+  { "lv_list", &be_class_lv_list, lv_list_func, sizeof(lv_list_func) / sizeof(lv_list_func[0]) },
+#endif // BE_LV_WIDGET_LIST
 #ifdef BE_LV_WIDGET_METER
   { "lv_meter", &be_class_lv_meter, lv_meter_func, sizeof(lv_meter_func) / sizeof(lv_meter_func[0]) },
 #endif // BE_LV_WIDGET_METER
@@ -1133,10 +1197,16 @@ const be_ntv_class_def_t lv_classes[] = {
 #ifdef BE_LV_WIDGET_TABLE
   { "lv_table", &be_class_lv_table, lv_table_func, sizeof(lv_table_func) / sizeof(lv_table_func[0]) },
 #endif // BE_LV_WIDGET_TABLE
+#ifdef BE_LV_WIDGET_TABVIEW
+  { "lv_tabview", &be_class_lv_tabview, lv_tabview_func, sizeof(lv_tabview_func) / sizeof(lv_tabview_func[0]) },
+#endif // BE_LV_WIDGET_TABVIEW
 #ifdef BE_LV_WIDGET_TEXTAREA
   { "lv_textarea", &be_class_lv_textarea, lv_textarea_func, sizeof(lv_textarea_func) / sizeof(lv_textarea_func[0]) },
 #endif // BE_LV_WIDGET_TEXTAREA
   { "lv_theme", &be_class_lv_theme, lv_theme_func, sizeof(lv_theme_func) / sizeof(lv_theme_func[0]) },
+#ifdef BE_LV_WIDGET_TILEVIEW
+  { "lv_tileview", &be_class_lv_tileview, lv_tileview_func, sizeof(lv_tileview_func) / sizeof(lv_tileview_func[0]) },
+#endif // BE_LV_WIDGET_TILEVIEW
   { "lv_timer", &be_class_lv_timer, lv_timer_func, sizeof(lv_timer_func) / sizeof(lv_timer_func[0]) },
 };
 const size_t lv_classes_size = sizeof(lv_classes) / sizeof(lv_classes[0]);
@@ -1171,10 +1241,22 @@ const size_t lv_classes_size = sizeof(lv_classes) / sizeof(lv_classes[0]);
 #ifdef BE_LV_WIDGET_IMGBTN
   int be_ntv_lv_imgbtn_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_imgbtn_create, "+_p", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_IMGBTN
+  /* `lv_keyboard` methods */
+#ifdef BE_LV_WIDGET_KEYBOARD
+  int be_ntv_lv_keyboard_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_keyboard_create, "+_p", "(lv.lv_obj)"); }
+#endif // BE_LV_WIDGET_KEYBOARD
+  /* `lv_btnmatrix` methods */
+#ifdef BE_LV_WIDGET_BTNMATRIX
+  int be_ntv_lv_btnmatrix_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_btnmatrix_create, "+_p", "(lv.lv_obj)"); }
+#endif // BE_LV_WIDGET_BTNMATRIX
   /* `lv_led` methods */
 #ifdef BE_LV_WIDGET_LED
   int be_ntv_lv_led_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_led_create, "+_p", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_LED
+  /* `lv_list` methods */
+#ifdef BE_LV_WIDGET_LIST
+  int be_ntv_lv_list_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_list_create, "+_p", "(lv.lv_obj)"); }
+#endif // BE_LV_WIDGET_LIST
   /* `lv_meter` methods */
 #ifdef BE_LV_WIDGET_METER
   int be_ntv_lv_meter_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_meter_create, "+_p", "(lv.lv_obj)"); }
@@ -1191,6 +1273,14 @@ const size_t lv_classes_size = sizeof(lv_classes) / sizeof(lv_classes[0]);
 #ifdef BE_LV_WIDGET_SPINNER
   int be_ntv_lv_spinner_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_spinner_create, "+_p", "(lv.lv_obj)ii"); }
 #endif // BE_LV_WIDGET_SPINNER
+  /* `lv_tabview` methods */
+#ifdef BE_LV_WIDGET_TABVIEW
+  int be_ntv_lv_tabview_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_tabview_create, "+_p", "(lv.lv_obj)ii"); }
+#endif // BE_LV_WIDGET_TABVIEW
+  /* `lv_tileview` methods */
+#ifdef BE_LV_WIDGET_TILEVIEW
+  int be_ntv_lv_tileview_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_tileview_create, "+_p", "(lv.lv_obj)"); }
+#endif // BE_LV_WIDGET_TILEVIEW
   /* `lv_anim` methods */
   /* `lv_timer` methods */
   /* `lv_arc` methods */
@@ -1205,10 +1295,6 @@ const size_t lv_classes_size = sizeof(lv_classes) / sizeof(lv_classes[0]);
 #ifdef BE_LV_WIDGET_BTN
   int be_ntv_lv_btn_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_btn_create, "+_p", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_BTN
-  /* `lv_btnmatrix` methods */
-#ifdef BE_LV_WIDGET_BTNMATRIX
-  int be_ntv_lv_btnmatrix_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_btnmatrix_create, "+_p", "(lv.lv_obj)"); }
-#endif // BE_LV_WIDGET_BTNMATRIX
   /* `lv_canvas` methods */
 #ifdef BE_LV_WIDGET_CANVAS
   int be_ntv_lv_canvas_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_canvas_create, "+_p", "(lv.lv_obj)"); }

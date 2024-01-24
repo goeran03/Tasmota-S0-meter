@@ -25,6 +25,11 @@
 /*********************************************************************************************\
  * Support the following Shangai Belling energy sensors:
  *
+ * BL0942 - Energy (as in Shelly Plus1PMMini)
+ * Template {"NAME":"Shelly Plus1PMMini","GPIO":[576,32,0,4736,0,224,3200,8161,0,0,192,0,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":1,"CMND":"AdcParam1 2,5600,4700,3350}
+ * Template {"NAME":"Shelly PlusPMMini","GPIO":[576,32,0,4736,0,0,3200,8161,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":1,"CMND":"AdcParam1 2,5600,4700,3350}
+ * Based on datasheet from https://datasheet.lcsc.com/lcsc/2110191830_BL-Shanghai-Belling-BL0942_C2909509.pdf
+ * 
  * BL0940 - Energy (as in Blitzwolf SHP10)
  * Template {"NAME":"BW-SHP10","GPIO":[0,148,0,207,158,21,0,0,0,17,0,0,0],"FLAG":0,"BASE":18}
  * Based on datasheet from http://www.belling.com.cn/media/file_object/bel_product/BL09XX/datasheet/BL09XX_V1.1_en.pdf
@@ -85,16 +90,19 @@ const uint8_t  bl09xx_init[5][4] = {
 
 struct BL09XX {
   uint32_t voltage = 0;
+  uint32_t frequency = 0;
   uint32_t current[2] = { 0, };
   int32_t power[2] = { 0, };
   float temperature;
   uint16_t tps1 = 0;
+  uint16_t baudrate;
   uint8_t *rx_buffer = nullptr;
   uint8_t buffer_size = 0;
   uint8_t byte_counter = 0;
   uint8_t address = 0;
   uint8_t model = 0;
   uint8_t rx_pin;
+  bool support_negative = 0;
   bool received = false;
 } Bl09XX;
 
@@ -164,19 +172,31 @@ bool Bl09XXDecode42(void) {
   // U 3560882, I 47550, P 26409, C 153
   // All above from a single test with a 40W buld on 230V
 
+  // Shelly Plus1PMMini
+  //  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22
+  // Hd Current- Voltage- IFRms--- Power--- CF------ Freq- 00 St 00 00 Ck
+  // 55 20 16 01 D2 A4 33 9B 63 00 9E 92 00 33 00 00 26 4E 00 20 01 00 7C
+  // 55 07 15 01 6A A7 33 C0 62 00 0E 92 00 34 00 00 26 4E 00 20 01 00 66
+  // 55 F0 15 01 E3 9C 33 4B 63 00 6E 92 00 34 00 00 26 4E 00 20 01 00 23
+
   if (Bl09XX.rx_buffer[0] != BL09XX_PACKET_HEADER) {
     AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("BL9: Invalid data hd=%02X"), Bl09XX.rx_buffer[0]);
     return false;
   }
 
+  Bl09XX.frequency  = Bl09XX.rx_buffer[17] << 8 | Bl09XX.rx_buffer[16];                                  // FREQ
   Bl09XX.voltage    = Bl09XX.rx_buffer[6] << 16 | Bl09XX.rx_buffer[5] << 8 | Bl09XX.rx_buffer[4];        // V_RMS unsigned
   Bl09XX.current[0] = Bl09XX.rx_buffer[3]  << 16 | Bl09XX.rx_buffer[2]  << 8 | Bl09XX.rx_buffer[1];      // IA_RMS unsigned
 
-//  Bl09XX.power[0]   = Bl09XX.rx_buffer[12] << 16 | Bl09XX.rx_buffer[11] << 8 | Bl09XX.rx_buffer[10];     // WATT_A signed
-//  if (bitRead(Bl09XX.power[0], 23)) { Bl09XX.power[0] |= 0xFF000000; }                                   // Extend sign bit
-  // Above reverted in favour of https://github.com/arendst/Tasmota/issues/15374#issuecomment-1105293179
-  int32_t tmp = Bl09XX.rx_buffer[12] << 24 | Bl09XX.rx_buffer[11] << 16 | Bl09XX.rx_buffer[10] << 8;     // WATT_A signed
-  Bl09XX.power[0] = abs(tmp >> 8);
+
+  if (Bl09XX.support_negative) {
+    Bl09XX.power[0]   = Bl09XX.rx_buffer[12] << 16 | Bl09XX.rx_buffer[11] << 8 | Bl09XX.rx_buffer[10];   // WATT_A signed
+    if (bitRead(Bl09XX.power[0], 23)) { Bl09XX.power[0] |= 0xFF000000; }                                 // Extend sign bit
+    // Above reverted in favour of https://github.com/arendst/Tasmota/issues/15374#issuecomment-1105293179
+  } else {
+    int32_t tmp = Bl09XX.rx_buffer[12] << 24 | Bl09XX.rx_buffer[11] << 16 | Bl09XX.rx_buffer[10] << 8;   // WATT_A signed
+    Bl09XX.power[0] = abs(tmp >> 8);
+  }
 
 #ifdef DEBUG_BL09XX
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("BL9: U %d, I %d, P %d"),
@@ -188,6 +208,9 @@ bool Bl09XXDecode42(void) {
 
 void Bl09XXUpdateEnergy() {
   if (Energy->power_on) {  // Powered on
+    if (BL0942_MODEL == Bl09XX.model) {
+      Energy->frequency[0] = (float)1000000.0 / Bl09XX.frequency;  // Datasheet page 19 (v1.04)
+    }
     Energy->voltage[0] = (float)Bl09XX.voltage / EnergyGetCalibration(ENERGY_VOLTAGE_CALIBRATION);
     Energy->voltage[1] = Energy->voltage[0];
 #ifdef DEBUG_BL09XX
@@ -285,10 +308,13 @@ void Bl09XXEverySecond(void) {
 void Bl09XXInit(void) {
   // Software serial init needs to be done here as earlier (serial) interrupts may lead to Exceptions
   Bl09XXSerial = new TasmotaSerial(Bl09XX.rx_pin, Pin(GPIO_TXD), 1);
-  if (Bl09XXSerial->begin(4800)) {
+  if (Bl09XXSerial->begin(Bl09XX.baudrate)) {
     if (Bl09XXSerial->hardwareSerial()) {
       ClaimSerial();
     }
+#ifdef ESP32
+    AddLog(LOG_LEVEL_DEBUG, PSTR("BL9: Serial UART%d"), Bl09XXSerial->getUart());
+#endif
     if (HLW_UREF_PULSE == EnergyGetCalibration(ENERGY_VOLTAGE_CALIBRATION)) {
       for (uint32_t i = 0; i < 2; i++) {
         EnergySetCalibration(ENERGY_POWER_CALIBRATION, bl09xx_pref[Bl09XX.model], i);
@@ -328,6 +354,7 @@ void Bl09XXInit(void) {
 void Bl09XXPreInit(void) {
   if (PinUsed(GPIO_TXD)) {
     Bl09XX.model = BL09XX_MODEL;
+    Bl09XX.baudrate = 4800;
     if (PinUsed(GPIO_BL0939_RX)) {
       Bl09XX.model = BL0939_MODEL;
       Bl09XX.rx_pin = Pin(GPIO_BL0939_RX);
@@ -336,9 +363,13 @@ void Bl09XXPreInit(void) {
       Bl09XX.model = BL0940_MODEL;
       Bl09XX.rx_pin = Pin(GPIO_BL0940_RX);
     }
-    else if (PinUsed(GPIO_BL0942_RX)) {
+    else if (PinUsed(GPIO_BL0942_RX, GPIO_ANY)) {
       Bl09XX.model = BL0942_MODEL;
-      Bl09XX.rx_pin = Pin(GPIO_BL0942_RX);
+      Bl09XX.rx_pin = Pin(GPIO_BL0942_RX, GPIO_ANY);
+      uint32_t option = GetPin(Bl09XX.rx_pin) - AGPIO(GPIO_BL0942_RX);  // 0 .. 7
+      Bl09XX.support_negative = (option > 3);        // 4 .. 7
+      uint32_t baudrate = option & 0x3;              // 0 .. 3 and 4 .. 7
+      Bl09XX.baudrate <<= baudrate;                  // Support 1 (4800), 2 (9600), 3 (19200), 4 (38400)
     }
     if (Bl09XX.model != BL09XX_MODEL) {
       Bl09XX.address = bl09xx_address[Bl09XX.model];
@@ -350,7 +381,7 @@ void Bl09XXPreInit(void) {
         Energy->use_overtemp = true;                 // Use global temperature for overtemp detection
         Energy->phase_count = bl09xx_phase_count[Bl09XX.model];  // Handle two channels as two phases
         TasmotaGlobal.energy_driver = XNRG_14;
-        AddLog(LOG_LEVEL_DEBUG,PSTR("BL9: Enabling BL09%02d"), bl09xx_type[Bl09XX.model]);
+        AddLog(LOG_LEVEL_DEBUG,PSTR("BL9: Enabling BL09%02d at %d bps"), bl09xx_type[Bl09XX.model], Bl09XX.baudrate);
       }
     }
   }

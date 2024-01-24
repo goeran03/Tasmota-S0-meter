@@ -57,6 +57,7 @@
 #define D_AP "存取點"                    // Access Point
 #define D_AS "名稱:"
 #define D_AUTO "自動"
+#define D_BATTERY "Battery"
 #define D_BATT "電池"                // Short for Battery
 #define D_BATTERY_CHARGE "Charge"  // Battery charge in % 
 #define D_BLINK "閃爍"
@@ -152,6 +153,7 @@
 #define D_POWER_FACTOR "功率因數"
 #define D_POWERUSAGE "用電量"
 #define D_POWERUSAGE_ACTIVE "有功功率"
+#define D_POWERUSAGE_ACTIVE_TOTAL "Active Power Total"
 #define D_POWERUSAGE_APPARENT "視在功率"
 #define D_POWERUSAGE_REACTIVE "虛功率"
 #define D_PRESSURE "氣壓"
@@ -165,7 +167,6 @@
 #define D_RESTART "重新啟動"
 #define D_RESTARTING "正在重新啟動"
 #define D_RESTART_REASON "重新啟動的原因"
-#define D_RESTORE "讀取設定"
 #define D_RETAINED "已保留"
 #define D_RULE "規則"
 #define D_SAVE "儲存"
@@ -191,7 +192,6 @@
 #define D_TWILIGHT_ASTRONOMICAL "Astronomical"
 #define D_TWILIGHT_CIVIL "Civil"
 #define D_TWILIGHT_NAUTICAL "Nautical"
-#define D_UPGRADE "升級"
 #define D_UPLOAD "上傳"
 #define D_UPTIME "啟動時間"
 #define D_USED "used"
@@ -275,7 +275,8 @@
 #define D_CONFIGURATION "設定"
 #define D_INFORMATION "資訊"
 #define D_FIRMWARE_UPGRADE "韌體升級"
-#define D_MANAGEMENT "Consoles"
+#define D_MANAGEMENT "Tools"
+#define D_GPIO_VIEWER "GPIO Viewer"
 #define D_CONSOLE "控制台"
 #define D_CONFIRM_RESTART "確認重新啟動"
 
@@ -289,6 +290,7 @@
 #define D_RESET_CONFIGURATION "重設設定"
 #define D_BACKUP_CONFIGURATION "備份設定"
 #define D_RESTORE_CONFIGURATION "回復設定"
+#define D_START_RESTORE "Start restore"
 #define D_MAIN_MENU "主選單"
 
 #define D_MODULE_PARAMETERS "模組參數"
@@ -306,6 +308,7 @@
 #define D_REFRESH_TO_SCAN_AGAIN "重新整理以重新掃描"
 #define D_DUPLICATE_ACCESSPOINT "重覆的存取點"
 #define D_SKIPPING_LOW_QUALITY "正在忽略訊號品質不佳的訊號"
+#define D_MODE "Mode"
 #define D_RSSI "RSSI"
 #define D_WEP "WEP"
 #define D_WPA_PSK "WPA PSK"
@@ -545,6 +548,22 @@
 #define D_DEVICE_INPUT "輸入"
 #define D_DEVICE_OUTPUT "輸出"
 
+// xdrv_39_thermostat.ino, xdrv_85_esp32_ble_eq3_trv.ino
+#define D_THERMOSTAT                  "Thermostat"
+#define D_THERMOSTAT_SET_POINT        "Set Point Temperature"
+#define D_THERMOSTAT_SENSOR           "Current Temperature"
+#define D_THERMOSTAT_GRADIENT         "Gradient Temperature"
+#define D_THERMOSTAT_DUTY_CYCLE       "Duty cycle"
+#define D_THERMOSTAT_CYCLE_TIME       "Cycle time"
+#define D_THERMOSTAT_PI_AUTOTUNE      "PI Auto tuning"
+#define D_THERMOSTAT_CONTROL_METHOD   "Control method"
+#define D_THERMOSTAT_RAMP_UP          "Ramp up"
+#define D_THERMOSTAT_PI               "PI"
+#define D_THERMOSTAT_AUTOTUNE         "Autotune"
+#define D_THERMOSTAT_RAMP_UP_HYBRID   "Ramp up (Hybrid)"
+#define D_THERMOSTAT_PI_HYBRID        "PI (Hybrid)"
+#define D_THERMOSTAT_AUTOTUNE_HYBRID  "Autotune (Hybrid)"
+
 // xsns_05_ds18b20.ino
 #define D_SENSOR_BUSY "感應器忙碌中"
 #define D_SENSOR_CRC_ERROR "感應器 CRC 校驗錯誤"
@@ -655,6 +674,7 @@
 #define D_SENSOR_I2S_BCLK_IN   "I2S WS IN"
 #define D_SENSOR_I2S_DIN       "I2S DIN"
 #define D_SENSOR_I2S_DOUT      "I2S DOUT"
+#define D_SENSOR_I2S_DAC       "I2S DAC"
 #define D_SENSOR_HDMI_CEC      "HDMI CEC"
 #define D_SENSOR_WS2812        "WS2812"
 #define D_SENSOR_DFR562        "MP3 Player"
@@ -672,6 +692,7 @@
 #define D_SENSOR_IRRECV        "IRrecv"
 #define D_SENSOR_MHZ_RX        "MHZ Rx"
 #define D_SENSOR_MHZ_TX        "MHZ Tx"
+#define D_SENSOR_HC8_RX        "HC8 Rx"
 #define D_SENSOR_PZEM004_RX    "PZEM004 Rx"
 #define D_SENSOR_PZEM016_RX    "PZEM016 Rx"
 #define D_SENSOR_PZEM017_RX    "PZEM017 Rx"
@@ -938,6 +959,7 @@
 #define D_SENSOR_BIOPDU_PZEM016_RX "BioPDU PZEM016 Rx"
 #define D_SENSOR_BIOPDU_BIT    "BioPDU Bit"
 #define D_SENSOR_LOX_O2_RX     "LoxO2 RX"
+#define D_GPIO_MAGIC_SWITCH "MagicSwitch"
 
 // Units
 #define D_UNIT_AMPERE "安培"
@@ -1201,5 +1223,9 @@
 // xsns_106_gdk101.ino
 #define D_AVG_RAD_DOSE                    "平均輻射劑量"
 #define D_UNIT_US_H                       "µSv/h"
+
+// ixrv92_pipsolar.ino
+#define D_SENSOR_PIPSOLAR_TX             "Pipsolar TX"
+#define D_SENSOR_PIPSOLAR_RX             "Pipsolar RX"
 
 #endif  // _LANGUAGE_ZH_TW_H_

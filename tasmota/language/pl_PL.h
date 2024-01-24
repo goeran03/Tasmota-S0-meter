@@ -57,6 +57,7 @@
 #define D_AP "AP"                    // Access Point
 #define D_AS "jak"
 #define D_AUTO "AUTO"
+#define D_BATTERY "Battery"
 #define D_BATT "Batt"                // Short for Battery
 #define D_BATTERY_CHARGE "Charge"   // Battery charge in %
 #define D_BLINK "Miganie"
@@ -152,6 +153,7 @@
 #define D_POWER_FACTOR "Cosinus fi"
 #define D_POWERUSAGE "Moc"
 #define D_POWERUSAGE_ACTIVE "Moc czynna"
+#define D_POWERUSAGE_ACTIVE_TOTAL "Active Power Total"
 #define D_POWERUSAGE_APPARENT "Moc pozorna"
 #define D_POWERUSAGE_REACTIVE "Moc bierna"
 #define D_PRESSURE "Ciśnienie"
@@ -165,7 +167,6 @@
 #define D_RESTART "Restart"
 #define D_RESTARTING "Restartowanie"
 #define D_RESTART_REASON "Przyczyna restartu"
-#define D_RESTORE "Przywracanie"
 #define D_RETAINED "Zachowane"
 #define D_RULE "Reguła"
 #define D_SAVE "Zapisz"
@@ -191,7 +192,6 @@
 #define D_TWILIGHT_ASTRONOMICAL "Astronomical"
 #define D_TWILIGHT_CIVIL "Civil"
 #define D_TWILIGHT_NAUTICAL "Nautical"
-#define D_UPGRADE "aktualizacji"
 #define D_UPLOAD "Wgraj"
 #define D_UPTIME "Czas pracy"
 #define D_USED "użyte"
@@ -276,6 +276,7 @@
 #define D_INFORMATION "Informacje"
 #define D_FIRMWARE_UPGRADE "Aktualizacja oprogramowania"
 #define D_MANAGEMENT "Konsole"
+#define D_GPIO_VIEWER "GPIO Viewer"
 #define D_CONSOLE "Konsola"
 #define D_CONFIRM_RESTART "Potwierdź restart"
 
@@ -289,6 +290,7 @@
 #define D_RESET_CONFIGURATION "Reset ustawień"
 #define D_BACKUP_CONFIGURATION "Kopia ustawień"
 #define D_RESTORE_CONFIGURATION "Przywracanie ustawień"
+#define D_START_RESTORE "Start restore"
 #define D_MAIN_MENU "Menu główne"
 
 #define D_MODULE_PARAMETERS "Parametry modułu"
@@ -306,6 +308,7 @@
 #define D_REFRESH_TO_SCAN_AGAIN "Odśwież aby ponownie wyszukać sieci"
 #define D_DUPLICATE_ACCESSPOINT "Duplikuj"
 #define D_SKIPPING_LOW_QUALITY "Pominięto z powodu niskiej jakości sygnału"
+#define D_MODE "Mode"
 #define D_RSSI "RSSI"
 #define D_WEP "WEP"
 #define D_WPA_PSK "WPA PSK"
@@ -545,6 +548,22 @@
 #define D_DEVICE_INPUT "Wejście"
 #define D_DEVICE_OUTPUT "Wyjście"
 
+// xdrv_39_thermostat.ino, xdrv_85_esp32_ble_eq3_trv.ino
+#define D_THERMOSTAT                  "Thermostat"
+#define D_THERMOSTAT_SET_POINT        "Set Point Temperature"
+#define D_THERMOSTAT_SENSOR           "Current Temperature"
+#define D_THERMOSTAT_GRADIENT         "Gradient Temperature"
+#define D_THERMOSTAT_DUTY_CYCLE       "Duty cycle"
+#define D_THERMOSTAT_CYCLE_TIME       "Cycle time"
+#define D_THERMOSTAT_PI_AUTOTUNE      "PI Auto tuning"
+#define D_THERMOSTAT_CONTROL_METHOD   "Control method"
+#define D_THERMOSTAT_RAMP_UP          "Ramp up"
+#define D_THERMOSTAT_PI               "PI"
+#define D_THERMOSTAT_AUTOTUNE         "Autotune"
+#define D_THERMOSTAT_RAMP_UP_HYBRID   "Ramp up (Hybrid)"
+#define D_THERMOSTAT_PI_HYBRID        "PI (Hybrid)"
+#define D_THERMOSTAT_AUTOTUNE_HYBRID  "Autotune (Hybrid)"
+
 // xsns_05_ds18b20.ino
 #define D_SENSOR_BUSY "Czujnik zajęty"
 #define D_SENSOR_CRC_ERROR "Błąd CRC czujnika"
@@ -655,6 +674,7 @@
 #define D_SENSOR_I2S_BCLK_IN   "I2S WS IN"
 #define D_SENSOR_I2S_DIN       "I2S DIN"
 #define D_SENSOR_I2S_DOUT      "I2S DOUT"
+#define D_SENSOR_I2S_DAC       "I2S DAC"
 #define D_SENSOR_HDMI_CEC      "HDMI CEC"
 #define D_SENSOR_WS2812        "WS2812"
 #define D_SENSOR_DFR562        "Odtwarzacz MP3"
@@ -672,6 +692,7 @@
 #define D_SENSOR_IRRECV        "IRrecv"
 #define D_SENSOR_MHZ_RX        "MHZ Rx"
 #define D_SENSOR_MHZ_TX        "MHZ Tx"
+#define D_SENSOR_HC8_RX        "HC8 Rx"
 #define D_SENSOR_PZEM004_RX    "PZEM004 Rx"
 #define D_SENSOR_PZEM016_RX    "PZEM016 Rx"
 #define D_SENSOR_PZEM017_RX    "PZEM017 Rx"
@@ -938,6 +959,7 @@
 #define D_SENSOR_BIOPDU_PZEM016_RX "BioPDU PZEM016 Rx"
 #define D_SENSOR_BIOPDU_BIT    "BioPDU Bit"
 #define D_SENSOR_LOX_O2_RX     "LoxO2 RX"
+#define D_GPIO_MAGIC_SWITCH "MagicSwitch"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -1201,5 +1223,9 @@
 // xsns_106_gdk101.ino
 #define D_AVG_RAD_DOSE                    "Średnia Dawka Promieniowania"
 #define D_UNIT_US_H                       "µSv/h"
+
+// ixrv92_pipsolar.ino
+#define D_SENSOR_PIPSOLAR_TX             "Pipsolar TX"
+#define D_SENSOR_PIPSOLAR_RX             "Pipsolar RX"
 
 #endif  // _LANGUAGE_PL_PL_D_H_

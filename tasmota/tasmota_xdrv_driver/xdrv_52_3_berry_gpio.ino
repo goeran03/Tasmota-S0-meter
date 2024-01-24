@@ -160,8 +160,8 @@ extern "C" {
         esp_err_t err =  dac_oneshot_new_channel(&channel_cfg, &channel_handle);
 #else
         dac_channel_t channel = (25 == pin) ? DAC_CHANNEL_1 : DAC_CHANNEL_2;
-//        esp_err_t err = dac_output_voltage(channel, dac_value);
-        esp_err_t err = dac_output_enable(channel);
+        esp_err_t err = dac_output_voltage(channel, dac_value);
+        // err = dac_output_enable(channel);
 #endif
         if (err) {
           be_raisef(vm, "internal_error", "Error: esp_err_tdac_output_voltage(%i, %i) -> %i", channel, dac_value, err);
@@ -180,8 +180,8 @@ extern "C" {
         esp_err_t err =  dac_oneshot_new_channel(&channel_cfg, &channel_handle);
 #else
         dac_channel_t channel = (17 == pin) ? DAC_CHANNEL_1 : DAC_CHANNEL_2;
-//        esp_err_t err = dac_output_voltage(channel, dac_value);
-        esp_err_t err = dac_output_enable(channel);
+        esp_err_t err = dac_output_voltage(channel, dac_value);
+        // err = dac_output_enable(channel);
 #endif
         if (err) {
           be_raisef(vm, "internal_error", "Error: esp_err_tdac_output_voltage(%i, %i) -> %i", channel, dac_value, err);
@@ -239,6 +239,108 @@ extern "C" {
 
   void gp_set_duty(int32_t pin, int32_t duty, int32_t hpoint) {
     analogWritePhase(pin, duty, hpoint);
+  }
+
+  // gpio.counter_read(counter:int) -> int or nil
+  //
+  // Read counter value, or return nil if counter is not used
+  int gp_counter_read(bvm *vm);
+  int gp_counter_read(bvm *vm) {
+#ifdef USE_COUNTER
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc >= 1 && be_isint(vm, 1)) {
+      int32_t counter = be_toint(vm, 1) + 1;    // counter are 0 based in Berry, 1 based in Tasmota
+
+      // is `index` refering to a counter?
+      if (CounterPinConfigured(counter)) {
+        be_pushint(vm, CounterPinRead(counter));
+        be_return(vm);
+      } else {
+        be_return_nil(vm);
+      }
+    }
+    be_raise(vm, kTypeError, nullptr);
+#else
+    be_return_nil(vm);
+#endif
+  }
+
+
+  int gp_counter_set_add(bvm *vm, bool add) {
+#ifdef USE_COUNTER
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc >= 2 && be_isint(vm, 1) && be_isint(vm, 2)) {
+      int32_t counter = be_toint(vm, 1) + 1;    // counter are 0 based in Berry, 1 based in Tasmota
+      int32_t value = be_toint(vm, 2);
+
+      // is `index` refering to a counter?
+      if (CounterPinConfigured(counter)) {
+        be_pushint(vm, CounterPinSet(counter, value, add));
+        be_return(vm);
+      } else {
+        be_return_nil(vm);
+      }
+    }
+    be_raise(vm, kTypeError, nullptr);
+#else
+    be_return_nil(vm);
+#endif
+  }
+
+  // gpio.counter_set(counter:int, value:int) -> int or nil
+  //
+  // Set the counter value, return the actual value, or return nil if counter is not used
+  int gp_counter_set(bvm *vm);
+  int gp_counter_set(bvm *vm) {
+    return gp_counter_set_add(vm, false);
+  }
+
+  // gpio.counter_add(counter:int, value:int) -> int or nil
+  //
+  // Add to the counter value, return the actual value, or return nil if counter is not used
+  int gp_counter_add(bvm *vm);
+  int gp_counter_add(bvm *vm) {
+    return gp_counter_set_add(vm, true);
+  }
+
+  // gpio.get_duty(pin:int) -> int
+  //
+  // Read the value of a PWM within resolution
+  // Returns -1 if pin is not a PWM pin
+  int gp_get_duty(int32_t pin);
+  int gp_get_duty(int32_t pin) {
+    return ledcRead2(pin);
+  }
+
+  // gpio.get_duty_resolution(pin:int) -> int
+  //
+  // Read the resolution of a PWM
+  // Returns -1 if pin is not a PWM pin
+  int gp_get_duty_resolution(int32_t pin);
+  int gp_get_duty_resolution(int32_t pin) {
+    int32_t channel = analogGetChannel2(pin);
+    if (channel >= 0) {
+      return (1 << ledcReadResolution(channel));
+    }
+    return -1;
+  }
+
+  // gpio.get_pin_type(phy_gpio:int) -> int
+  //
+  // Get the type configured for physical GPIO
+  // Return 0 if GPIO is not configured
+  extern int gp_get_pin(int32_t pin);
+  extern int gp_get_pin(int32_t pin) {
+    return GetPin(pin) / 32;
+  }
+
+  // gpio.get_pin_type_index(phy_gpio:int) -> int
+  //
+  // Get the sub-index for the type configured for physical GPIO
+  // Return 0 if GPIO is not configured
+  extern int gp_get_pin_index(int32_t pin);
+  extern int gp_get_pin_index(int32_t pin) {
+    return GetPin(pin) % 32;
   }
 
 }

@@ -190,7 +190,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t berry_light_scheme : 1;       // bit 8  (v12.5.0.3) - SetOption154 - (Berry) Handle berry led using RMT0 as additional WS2812 scheme
     uint32_t zcfallingedge : 1;            // bit 9  (v13.0.0.1) - SetOption155 - (ZCDimmer) Enable rare falling Edge dimmer instead of leading edge
     uint32_t sen5x_passive_mode : 1;       // bit 10 (v13.1.0.1) - SetOption156 - (Sen5x) Run in passive mode when there is another I2C master (e.g. Ikea Vindstyrka), i.e. do not set up Sen5x sensor, higher polling interval
-    uint32_t spare11 : 1;                  // bit 11
+    uint32_t neopool_outputsensitive : 1;  // bit 11 (v13.2.0.1) - SetOption157 - (NeoPool) Output sensitive data (1)
     uint32_t spare12 : 1;                  // bit 12
     uint32_t spare13 : 1;                  // bit 13
     uint32_t spare14 : 1;                  // bit 14
@@ -264,8 +264,7 @@ typedef union {
     uint32_t spare21 : 1;                  // bit 21
     uint32_t spare22 : 1;                  // bit 22
     uint32_t spare23 : 1;                  // bit 23
-    uint32_t spare24 : 1;                  // bit 24
-    uint32_t spare25 : 1;                  // bit 25
+    uint32_t FTP_Mode : 2;                  // bit 24, 25
     uint32_t tariff_forced : 2;            // bit 26..27 (v12.4.0.2) - Energy forced tariff : 0=tariff change on time, 1|2=tariff forced
     uint32_t sunrise_dawn_angle : 2;       // bits 28/29 (v12.1.1.4) -
     uint32_t temperature_set_res : 2;      // bits 30/31 (v9.3.1.4) - (Tuya)
@@ -858,8 +857,9 @@ typedef struct {
   uint8_t       hdmi_cec_device_type;      // F61  - v13.1.0.1 (was ex_modbus_sbaudrate v12.2.0.5)
 
   uint8_t       modbus_sconfig;            // F62
+  uint8_t       windmeter_measure_intvl;   // F63
 
-  uint8_t       free_f63[13];              // F63 - Decrement if adding new Setting variables just above and below
+  uint8_t       free_f64[12];              // F64 - Decrement if adding new Setting variables just above and below
 
   // Only 32 bit boundary variables below
   uint32_t      touch_threshold;           // F70

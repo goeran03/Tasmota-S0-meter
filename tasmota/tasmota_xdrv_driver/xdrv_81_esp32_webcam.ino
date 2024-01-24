@@ -1239,7 +1239,11 @@ void CmndWebcam(void) {
 void CmndWebcamStream(void) {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
     Settings->webcam_config.stream = XdrvMailbox.payload;
-    if (!Settings->webcam_config.stream) { WcInterruptControl(); }  // Stop stream
+    if (!Settings->webcam_config.stream) { 
+      WcInterruptControl();  // Stop stream
+    } else {
+      WcSetStreamserver(Settings->webcam_config.stream);  // Ensure server is running
+    }
   }
   ResponseCmndStateText(Settings->webcam_config.stream);
 }
@@ -1528,6 +1532,9 @@ bool Xdrv81(uint32_t function) {
       break;
     case FUNC_INIT:
       if(Wc.up == 0) WcSetup(Settings->webcam_config.resolution);
+      break;
+    case FUNC_ACTIVE:
+      result = true;
       break;
 
   }

@@ -7,6 +7,37 @@
 extern const bclass be_class_Matter_Plugin_Sensor_Illuminance;
 
 /********************************************************************
+** Solidified function: value_changed
+********************************************************************/
+be_local_closure(Matter_Plugin_Sensor_Illuminance_value_changed,   /* name */
+  be_nested_proto(
+    5,                          /* nstack */
+    1,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_str_weak(attribute_updated),
+    /* K1   */  be_const_int(0),
+    }),
+    be_str_weak(value_changed),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 5]) {  /* code */
+      0x8C040100,  //  0000  GETMET	R1	R0	K0
+      0x540E03FF,  //  0001  LDINT	R3	1024
+      0x58100001,  //  0002  LDCONST	R4	K1
+      0x7C040600,  //  0003  CALL	R1	3
+      0x80000000,  //  0004  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
 ** Solidified function: read_attribute
 ********************************************************************/
 be_local_closure(Matter_Plugin_Sensor_Illuminance_read_attribute,   /* name */
@@ -161,47 +192,29 @@ be_local_closure(Matter_Plugin_Sensor_Illuminance_pre_value,   /* name */
 
 
 /********************************************************************
-** Solidified function: value_changed
-********************************************************************/
-be_local_closure(Matter_Plugin_Sensor_Illuminance_value_changed,   /* name */
-  be_nested_proto(
-    6,                          /* nstack */
-    2,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str_weak(attribute_updated),
-    /* K1   */  be_const_int(0),
-    }),
-    be_str_weak(value_changed),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 5]) {  /* code */
-      0x8C080100,  //  0000  GETMET	R2	R0	K0
-      0x541203FF,  //  0001  LDINT	R4	1024
-      0x58140001,  //  0002  LDCONST	R5	K1
-      0x7C080600,  //  0003  CALL	R2	3
-      0x80000000,  //  0004  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
 ** Solidified class: Matter_Plugin_Sensor_Illuminance
 ********************************************************************/
 extern const bclass be_class_Matter_Plugin_Sensor;
 be_local_class(Matter_Plugin_Sensor_Illuminance,
     0,
     &be_class_Matter_Plugin_Sensor,
-    be_nested_map(7,
+    be_nested_map(9,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(read_attribute, 2), be_const_closure(Matter_Plugin_Sensor_Illuminance_read_attribute_closure) },
-        { be_const_key_weak(pre_value, 4), be_const_closure(Matter_Plugin_Sensor_Illuminance_pre_value_closure) },
+        { be_const_key_weak(DISPLAY_NAME, -1), be_nested_str_weak(Illuminance) },
+        { be_const_key_weak(TYPE, -1), be_nested_str_weak(illuminance) },
+        { be_const_key_weak(TYPES, 8), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
+        be_const_map( *     be_nested_map(1,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_const_key_int(262, -1), be_const_int(2) },
+    }))    ) } )) },
+        { be_const_key_weak(UPDATE_COMMANDS, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_list, {
+        be_const_list( *     be_nested_list(1,
+    ( (struct bvalue*) &(const bvalue[]) {
+        be_nested_str_weak(Illuminance),
+    }))    ) } )) },
+        { be_const_key_weak(value_changed, 7), be_const_closure(Matter_Plugin_Sensor_Illuminance_value_changed_closure) },
+        { be_const_key_weak(JSON_NAME, -1), be_nested_str_weak(Illuminance) },
+        { be_const_key_weak(read_attribute, -1), be_const_closure(Matter_Plugin_Sensor_Illuminance_read_attribute_closure) },
         { be_const_key_weak(CLUSTERS, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(6,
     ( (struct bmapnode*) &(const bmapnode[]) {
@@ -263,14 +276,7 @@ be_local_class(Matter_Plugin_Sensor_Illuminance,
         be_const_int(65533),
     }))    ) } )) },
     }))    ) } )) },
-        { be_const_key_weak(TYPE, 6), be_nested_str_weak(illuminance) },
-        { be_const_key_weak(NAME, -1), be_nested_str_weak(Illuminance) },
-        { be_const_key_weak(value_changed, -1), be_const_closure(Matter_Plugin_Sensor_Illuminance_value_changed_closure) },
-        { be_const_key_weak(TYPES, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
-        be_const_map( *     be_nested_map(1,
-    ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_int(262, -1), be_const_int(2) },
-    }))    ) } )) },
+        { be_const_key_weak(pre_value, -1), be_const_closure(Matter_Plugin_Sensor_Illuminance_pre_value_closure) },
     })),
     be_str_weak(Matter_Plugin_Sensor_Illuminance)
 );

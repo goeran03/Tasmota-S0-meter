@@ -5,6 +5,8 @@
  *******************************************************************/
 #include "be_constobj.h"
 #include "be_ctypes.h"
+#include "be_mapping.h"
+#include "be_ctypes.h"
 
 extern struct TasmotaGlobal_t TasmotaGlobal;
 extern struct TSettings * Settings;
@@ -33,6 +35,8 @@ extern int l_yield(bvm *vm);
 extern int l_delay(bvm *vm);
 extern int l_delay_microseconds(bvm *vm);
 extern int l_scaleuint(bvm *vm);
+extern int l_scaleint(bvm *vm);
+extern int l_sineint(bvm *vm);
 extern int l_logInfo(bvm *vm);
 extern int l_loglevel(bvm *vm);
 extern int l_save(bvm *vm);
@@ -52,6 +56,8 @@ extern int l_respAppend(bvm *vm);
 extern int l_webSend(bvm *vm);
 extern int l_webSendDecimal(bvm *vm);
 
+extern int l_webcolor(bvm *vm);
+
 extern int l_getlight(bvm *vm);
 extern int l_setlight(bvm *vm);
 extern int l_getpower(bvm *vm);
@@ -61,6 +67,13 @@ extern int l_getswitch(bvm *vm);
 extern int l_i2cenabled(bvm *vm);
 extern int tasm_find_op(bvm *vm);
 extern int tasm_apply_str_op(bvm *vm);
+
+// tasmota.version() -> int
+extern int32_t be_Tasmota_version(void);
+BE_FUNC_CTYPE_DECLARE(be_Tasmota_version, "i", "-");
+
+extern bbool BerryBECLoader(const char * url);
+BE_FUNC_CTYPE_DECLARE(BerryBECLoader, "b", "s")
 
 #include "solidify/solidified_tasmota_class.h"
 #include "solidify/solidified_rule_matcher.h"
@@ -100,19 +113,21 @@ class be_class_tasmota (scope: global, name: Tasmota) {
     get_option, func(l_getoption)
     millis, func(l_millis)
     time_reached, func(l_timereached)
-    rtc, func(l_rtc)
+    rtc, static_func(l_rtc)
     rtc_utc, func(l_rtc_utc)
     time_dump, func(l_time_dump)
     strftime, func(l_strftime)
     strptime, func(l_strptime)
-    memory, func(l_memory)
-    wifi, func(l_wifi)
-    eth, func(l_eth)
+    memory, static_func(l_memory)
+    wifi, static_func(l_wifi)
+    eth, static_func(l_eth)
     hostname, func(l_hostname)
     yield, func(l_yield)
     delay, func(l_delay)
     delay_microseconds, func(l_delay_microseconds)
     scale_uint, static_func(l_scaleuint)
+    scale_int, static_func(l_scaleint)
+    sine_int, static_func(l_sineint)
     log, func(l_logInfo)
     loglevel, func(l_loglevel)
     save, func(l_save)
@@ -130,6 +145,7 @@ class be_class_tasmota (scope: global, name: Tasmota) {
     response_append, func(l_respAppend)
     web_send, func(l_webSend)
     web_send_decimal, func(l_webSendDecimal)
+    webcolor, static_func(l_webcolor)
 
     get_power, func(l_getpower)
     set_power, func(l_setpower)
@@ -137,6 +153,7 @@ class be_class_tasmota (scope: global, name: Tasmota) {
     get_switches, func(l_getswitch)
 
     i2c_enabled, func(l_i2cenabled)
+    version, ctype_func(be_Tasmota_version)
 
     fast_loop, closure(Tasmota_fast_loop_closure)
     add_fast_loop, closure(Tasmota_add_fast_loop_closure)
@@ -145,6 +162,7 @@ class be_class_tasmota (scope: global, name: Tasmota) {
     _find_op, func(tasm_find_op)        // new C version for finding a rule operator
     _apply_str_op, func(tasm_apply_str_op)
     find_key_i, closure(Tasmota_find_key_i_closure)
+    find_list_i, closure(Tasmota_find_list_i_closure)
     find_op, closure(Tasmota_find_op_closure)
     add_rule, closure(Tasmota_add_rule_closure)
     remove_rule, closure(Tasmota_remove_rule_closure)
@@ -166,6 +184,7 @@ class be_class_tasmota (scope: global, name: Tasmota) {
     time_str, closure(Tasmota_time_str_closure)
     urlfetch, closure(Tasmota_urlfetch_closure)
     urlfetch_cmd, closure(Tasmota_urlfetch_cmd_closure)
+    urlbecload, static_ctype_func(BerryBECLoader)
 
     add_cron, closure(Tasmota_add_cron_closure)
     run_cron, closure(Tasmota_run_cron_closure)

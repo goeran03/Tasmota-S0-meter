@@ -57,6 +57,7 @@
 #define D_AP "Точка за достъп"       // Access Point
 #define D_AS "като"
 #define D_AUTO "АВТОМАТИЧНО"
+#define D_BATTERY "Battery"
 #define D_BATT "Бат."                // Short for Battery
 #define D_BATTERY_CHARGE "Charge"   // Battery charge in %
 #define D_BLINK "Мигане вкл."
@@ -152,6 +153,7 @@
 #define D_POWER_FACTOR "Фактор на мощността"
 #define D_POWERUSAGE "Мощност"
 #define D_POWERUSAGE_ACTIVE "Активна мощност"
+#define D_POWERUSAGE_ACTIVE_TOTAL "Active Power Total"
 #define D_POWERUSAGE_APPARENT "Пълна мощност"
 #define D_POWERUSAGE_REACTIVE "Реактивна мощност"
 #define D_PRESSURE "Налягане"
@@ -165,7 +167,6 @@
 #define D_RESTART "Рестартиране"
 #define D_RESTARTING "Рестартиране"
 #define D_RESTART_REASON "Причина за рестарт"
-#define D_RESTORE "възстановяване"
 #define D_RETAINED "запазено"
 #define D_RULE "Правило"
 #define D_SAVE "Запазване"
@@ -191,7 +192,6 @@
 #define D_TWILIGHT_ASTRONOMICAL "Astronomical"
 #define D_TWILIGHT_CIVIL "Civil"
 #define D_TWILIGHT_NAUTICAL "Nautical"
-#define D_UPGRADE "Обновяване"
 #define D_UPLOAD "Качването е"
 #define D_UPTIME "Време на работа"
 #define D_USED "използвано"
@@ -276,6 +276,7 @@
 #define D_INFORMATION "Информация"
 #define D_FIRMWARE_UPGRADE "Обновяване на софтуера"
 #define D_MANAGEMENT "Терминали"
+#define D_GPIO_VIEWER "GPIO Viewer"
 #define D_CONSOLE "Терминал"
 #define D_CONFIRM_RESTART "Потвърдете рестартиране"
 
@@ -289,6 +290,7 @@
 #define D_RESET_CONFIGURATION "Нулиране на настройки"
 #define D_BACKUP_CONFIGURATION "Резервно копие на настройки"
 #define D_RESTORE_CONFIGURATION "Възстановяване на настройки"
+#define D_START_RESTORE "Start restore"
 #define D_MAIN_MENU "Начало"
 
 #define D_MODULE_PARAMETERS "Параметри на модула"
@@ -306,6 +308,7 @@
 #define D_REFRESH_TO_SCAN_AGAIN "Обновяване за повторно сканиране"
 #define D_DUPLICATE_ACCESSPOINT "Дублирана точка за достъп"
 #define D_SKIPPING_LOW_QUALITY "Пропускане поради лошо качество"
+#define D_MODE "Mode"
 #define D_RSSI "RSSI"
 #define D_WEP "WEP"
 #define D_WPA_PSK "WPA PSK"
@@ -545,6 +548,22 @@
 #define D_DEVICE_INPUT "Вход"
 #define D_DEVICE_OUTPUT "Изход"
 
+// xdrv_39_thermostat.ino, xdrv_85_esp32_ble_eq3_trv.ino
+#define D_THERMOSTAT                  "Thermostat"
+#define D_THERMOSTAT_SET_POINT        "Set Point Temperature"
+#define D_THERMOSTAT_SENSOR           "Current Temperature"
+#define D_THERMOSTAT_GRADIENT         "Gradient Temperature"
+#define D_THERMOSTAT_DUTY_CYCLE       "Duty cycle"
+#define D_THERMOSTAT_CYCLE_TIME       "Cycle time"
+#define D_THERMOSTAT_PI_AUTOTUNE      "PI Auto tuning"
+#define D_THERMOSTAT_CONTROL_METHOD   "Control method"
+#define D_THERMOSTAT_RAMP_UP          "Ramp up"
+#define D_THERMOSTAT_PI               "PI"
+#define D_THERMOSTAT_AUTOTUNE         "Autotune"
+#define D_THERMOSTAT_RAMP_UP_HYBRID   "Ramp up (Hybrid)"
+#define D_THERMOSTAT_PI_HYBRID        "PI (Hybrid)"
+#define D_THERMOSTAT_AUTOTUNE_HYBRID  "Autotune (Hybrid)"
+
 // xsns_05_ds18b20.ino
 #define D_SENSOR_BUSY "Датчикът DS18x20 е зает"
 #define D_SENSOR_CRC_ERROR "Датчик DS18x20 - грешка CRC"
@@ -655,6 +674,7 @@
 #define D_SENSOR_I2S_BCLK_IN   "I2S WS IN"
 #define D_SENSOR_I2S_DIN       "I2S DIN"
 #define D_SENSOR_I2S_DOUT      "I2S DOUT"
+#define D_SENSOR_I2S_DAC       "I2S DAC"
 #define D_SENSOR_HDMI_CEC      "HDMI CEC"
 #define D_SENSOR_WS2812        "WS2812"
 #define D_SENSOR_DFR562        "MP3 Player"
@@ -672,6 +692,7 @@
 #define D_SENSOR_IRRECV        "IRrecv"
 #define D_SENSOR_MHZ_RX        "MHZ Rx"
 #define D_SENSOR_MHZ_TX        "MHZ Tx"
+#define D_SENSOR_HC8_RX        "HC8 Rx"
 #define D_SENSOR_PZEM004_RX    "PZEM004 Rx"
 #define D_SENSOR_PZEM016_RX    "PZEM016 Rx"
 #define D_SENSOR_PZEM017_RX    "PZEM017 Rx"
@@ -938,6 +959,7 @@
 #define D_SENSOR_BIOPDU_PZEM016_RX "BioPDU PZEM016 Rx"
 #define D_SENSOR_BIOPDU_BIT    "BioPDU Bit"
 #define D_SENSOR_LOX_O2_RX     "LoxO2 RX"
+#define D_GPIO_MAGIC_SWITCH "MagicSwitch"
 
 // Units
 #define D_UNIT_AMPERE "А"
@@ -1201,5 +1223,9 @@
 // xsns_106_gdk101.ino
 #define D_AVG_RAD_DOSE                    "средна доза радиация"
 #define D_UNIT_US_H                       "µSv/h"
+
+// ixrv92_pipsolar.ino
+#define D_SENSOR_PIPSOLAR_TX             "Pipsolar TX"
+#define D_SENSOR_PIPSOLAR_RX             "Pipsolar RX"
 
 #endif  // _LANGUAGE_BG_BG_H_

@@ -61,6 +61,10 @@ lv_fun_globs = [
                   "extra/widgets/msgbox/*.h",
                   "extra/widgets/spinbox/*.h",
                   "extra/widgets/spinner/*.h",
+                  "extra/widgets/keyboard/*.h",
+                  "extra/widgets/tabview/*.h",
+                  "extra/widgets/tileview/*.h",
+                  "extra/widgets/list/*.h",
                   "extra/themes/default/*.h",
                   "extra/themes/mono/*.h",
                   "extra/layouts/**/*.h",
@@ -86,7 +90,7 @@ headers_names += list_files("../../LVGL_assets/src/", ["lv_theme_haspmota.h"])
 # headers_names = [ '../../lib/libesp32_lvgl/LVGL/src/lv_api_map.h' ]
 
 output_filename = "../mapping/lv_funcs.h"
-sys.stdout = open(output_filename, 'w')
+sys.stdout = open(output_filename, 'w', encoding='utf-8')
 
 print("""
 // Automatically generated from LVGL source with `python3 preprocessor.py`
@@ -121,7 +125,7 @@ lv_coord_t lv_get_ver_res(void);
 """)
 
 for header_name in headers_names:
-  with open(header_name) as f:
+  with open(header_name, encoding='utf-8') as f:
     print("// " + header_name)
     raw = clean_source(f.read())
 
@@ -198,7 +202,7 @@ lv_fun_globs = [
 headers_names = list_files(lv_src_prefix, lv_fun_globs)
 
 output_filename = "../mapping/lv_enum.h"
-sys.stdout = open(output_filename, 'w')
+sys.stdout = open(output_filename, 'w', encoding='utf-8')
 print("""// ======================================================================
 // Functions
 // ======================================================================
@@ -340,7 +344,7 @@ for header_name in headers_names:
         # item is ready
         exclude = False
         for exclude_prefix in ["_", "LV_BIDI_DIR_", "LV_FONT_", "LV_IMG_CF_RESERVED_", "LV_IMG_CF_USER_",
-                               "LV_SIGNAL_", "LV_TEMPL_", "LV_TASK_PRIO_", "LV_THEME_", "LV_KEYBOARD_",
+                               "LV_SIGNAL_", "LV_TEMPL_", "LV_TASK_PRIO_", "LV_THEME_",
                                "LV_LRU_"]:
           if enum_item.startswith(exclude_prefix): exclude = True
         if exclude: continue

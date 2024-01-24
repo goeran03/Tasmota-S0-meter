@@ -1,8 +1,6 @@
 ## Available Features and Sensors
 
-ESP8266 / ESP32
-
-l = lite, t = tasmota, k = knx, s = sensors, i = ir, d = display
+l = lite, t = tasmota (ESP8266 / ESP32), k = knx, s = sensors, i = ir, d = display
 
 Note: `minimal` variant is not listed as it shouldn't be used outside of the [upgrading](https://tasmota.github.io/docs/Upgrading/) process.
 
@@ -32,8 +30,8 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_SUNRISE               | x | x / x | x | x | x | x |
 | USE_RULES                 | x | x / x | x | x | x | x |
 | USE_SCRIPT                | - | - / - | - | - | - | - |
-| USE_EXPRESSION            | - | - / - | - | - | - | - |
-| SUPPORT_IF_STATEMENT      | - | - / - | - | - | - | - |
+| USE_EXPRESSION            | - | - / x | - | - | - | - | Every ESP32 + ESP8266 > 1MB
+| SUPPORT_IF_STATEMENT      | - | - / x | - | - | - | - | Every ESP32 + ESP8266 > 1MB
 | USE_HOTPLUG               | - | - / - | - | - | - | - |
 | USE_PROMETHEUS            | - | - / - | - | - | - | - |
 | USE_PING                  | - | - / - | - | - | - | - |
@@ -132,6 +130,8 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_MPR121                | - | - / - | - | - | - | - |
 | USE_CCS811                | - | - / - | - | x | - | - |
 | USE_CCS811_V2             | - | - / x | - | - | - | - |
+| USE_ENS16x                | - | - / - | - | - | - | - |
+| USE_ENS210                | - | - / - | - | - | - | - |
 | USE_MPU6050               | - | - / - | - | - | - | - |
 | USE_DS3231                | - | - / - | - | - | - | - |
 | USE_MGC3130               | - | - / - | - | - | - | - |

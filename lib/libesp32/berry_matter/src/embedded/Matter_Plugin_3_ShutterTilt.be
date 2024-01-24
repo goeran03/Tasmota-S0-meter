@@ -25,7 +25,7 @@ import matter
 
 class Matter_Plugin_ShutterTilt : Matter_Plugin_Shutter
   static var TYPE = "shutter+tilt"                  # name of the plug-in in json
-  static var NAME = "Shutter + Tilt"                # display name of the plug-in
+  static var DISPLAY_NAME = "Shutter + Tilt"                # display name of the plug-in
   # inherited static var ARG  = "shutter"                       # additional argument name (or empty if none)
   # inherited static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
@@ -43,6 +43,7 @@ class Matter_Plugin_ShutterTilt : Matter_Plugin_Shutter
   # var shadow_shutter_target
   # var shadow_shutter_tilt
   # var shadow_shutter_direction                      # 1=opening -1=closing 0=not moving TODO
+  var shadow_shutter_tilt
   var tilt_min, tilt_max
 
   #############################################################
@@ -163,9 +164,6 @@ class Matter_Plugin_ShutterTilt : Matter_Plugin_Shutter
     return super(self).invoke_request(session, val, ctx)
 
   end
-
-  #############################################################
-  # parse sensor inherited
 
 end
 matter.Plugin_ShutterTilt = Matter_Plugin_ShutterTilt

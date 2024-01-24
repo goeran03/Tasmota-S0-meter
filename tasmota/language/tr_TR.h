@@ -57,6 +57,7 @@
 #define D_AP "AP"                    // Access Point
 #define D_AS "as"
 #define D_AUTO "OTOMATIK"
+#define D_BATTERY "Battery"
 #define D_BATT "Batt"                // Short for Battery
 #define D_BATTERY_CHARGE "Charge"   // Battery charge in %
 #define D_BLINK "Blink"
@@ -152,6 +153,7 @@
 #define D_POWER_FACTOR "Güç Faktörü"
 #define D_POWERUSAGE "Güç"
 #define D_POWERUSAGE_ACTIVE "Aktif Güç"
+#define D_POWERUSAGE_ACTIVE_TOTAL "Active Power Total"
 #define D_POWERUSAGE_APPARENT "Görünen Güç"
 #define D_POWERUSAGE_REACTIVE "Reaktif Güç"
 #define D_PRESSURE "Basınç"
@@ -165,7 +167,6 @@
 #define D_RESTART "Yeniden Başlat"
 #define D_RESTARTING "Yeniden Başlatılıyor"
 #define D_RESTART_REASON "Yeniden Başlatma Sebebi"
-#define D_RESTORE "restore"
 #define D_RETAINED "tutulan"
 #define D_RULE "Kural"
 #define D_SAVE "Kaydet"
@@ -191,7 +192,6 @@
 #define D_TWILIGHT_ASTRONOMICAL "Astronomical"
 #define D_TWILIGHT_CIVIL "Civil"
 #define D_TWILIGHT_NAUTICAL "Nautical"
-#define D_UPGRADE "yükseltme"
 #define D_UPLOAD "Yükleme"
 #define D_UPTIME "Açık Kalma Süresi"
 #define D_USED "used"
@@ -275,7 +275,8 @@
 #define D_CONFIGURATION "Konfigürasyon"
 #define D_INFORMATION "Bilgi"
 #define D_FIRMWARE_UPGRADE "Cihaz yazılımını Güncelle"
-#define D_MANAGEMENT "Consoles"
+#define D_MANAGEMENT "Tools"
+#define D_GPIO_VIEWER "GPIO Viewer"
 #define D_CONSOLE "Konsol"
 #define D_CONFIRM_RESTART "Yeniden Başlatmayı Onayla"
 
@@ -289,6 +290,7 @@
 #define D_RESET_CONFIGURATION "Tüm Ayarları Resetle"
 #define D_BACKUP_CONFIGURATION "Ayarları Yedekle"
 #define D_RESTORE_CONFIGURATION "Ayarları Geri Yükle"
+#define D_START_RESTORE "Start restore"
 #define D_MAIN_MENU "Ana Menü"
 
 #define D_MODULE_PARAMETERS "Modül parametreleri"
@@ -306,6 +308,7 @@
 #define D_REFRESH_TO_SCAN_AGAIN "Tekrar tarama - yenile"
 #define D_DUPLICATE_ACCESSPOINT "AP'yi çoğalt"
 #define D_SKIPPING_LOW_QUALITY "Düşük kalitedekileri dikkate alma"
+#define D_MODE "Mode"
 #define D_RSSI "RSSI"
 #define D_WEP "WEP"
 #define D_WPA_PSK "WPA PSK"
@@ -545,6 +548,22 @@
 #define D_DEVICE_INPUT "Input"
 #define D_DEVICE_OUTPUT "Output"
 
+// xdrv_39_thermostat.ino, xdrv_85_esp32_ble_eq3_trv.ino
+#define D_THERMOSTAT                  "Thermostat"
+#define D_THERMOSTAT_SET_POINT        "Set Point Temperature"
+#define D_THERMOSTAT_SENSOR           "Current Temperature"
+#define D_THERMOSTAT_GRADIENT         "Gradient Temperature"
+#define D_THERMOSTAT_DUTY_CYCLE       "Duty cycle"
+#define D_THERMOSTAT_CYCLE_TIME       "Cycle time"
+#define D_THERMOSTAT_PI_AUTOTUNE      "PI Auto tuning"
+#define D_THERMOSTAT_CONTROL_METHOD   "Control method"
+#define D_THERMOSTAT_RAMP_UP          "Ramp up"
+#define D_THERMOSTAT_PI               "PI"
+#define D_THERMOSTAT_AUTOTUNE         "Autotune"
+#define D_THERMOSTAT_RAMP_UP_HYBRID   "Ramp up (Hybrid)"
+#define D_THERMOSTAT_PI_HYBRID        "PI (Hybrid)"
+#define D_THERMOSTAT_AUTOTUNE_HYBRID  "Autotune (Hybrid)"
+
 // xsns_05_ds18b20.ino
 #define D_SENSOR_BUSY "Sensör başgül"
 #define D_SENSOR_CRC_ERROR "Sensor CRC hatası"
@@ -655,6 +674,7 @@
 #define D_SENSOR_I2S_BCLK_IN   "I2S WS IN"
 #define D_SENSOR_I2S_DIN       "I2S DIN"
 #define D_SENSOR_I2S_DOUT      "I2S DOUT"
+#define D_SENSOR_I2S_DAC       "I2S DAC"
 #define D_SENSOR_HDMI_CEC      "HDMI CEC"
 #define D_SENSOR_WS2812        "WS2812"
 #define D_SENSOR_DFR562        "MP3 Player"
@@ -672,6 +692,7 @@
 #define D_SENSOR_IRRECV        "IRrecv"
 #define D_SENSOR_MHZ_RX        "MHZ Rx"
 #define D_SENSOR_MHZ_TX        "MHZ Tx"
+#define D_SENSOR_HC8_RX        "HC8 Rx"
 #define D_SENSOR_PZEM004_RX    "PZEM004 Rx"
 #define D_SENSOR_PZEM016_RX    "PZEM016 Rx"
 #define D_SENSOR_PZEM017_RX    "PZEM017 Rx"
@@ -938,6 +959,7 @@
 #define D_SENSOR_BIOPDU_PZEM016_RX "BioPDU PZEM016 Rx"
 #define D_SENSOR_BIOPDU_BIT    "BioPDU Bit"
 #define D_SENSOR_LOX_O2_RX     "LoxO2 RX"
+#define D_GPIO_MAGIC_SWITCH "MagicSwitch"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -1201,5 +1223,9 @@
 // xsns_106_gdk101.ino
 #define D_AVG_RAD_DOSE                    "ortalama radyasyon dozu"
 #define D_UNIT_US_H                       "µSv/h"
+
+// ixrv92_pipsolar.ino
+#define D_SENSOR_PIPSOLAR_TX             "Pipsolar TX"
+#define D_SENSOR_PIPSOLAR_RX             "Pipsolar RX"
 
 #endif  // _LANGUAGE_TR_TR_H_

@@ -146,7 +146,10 @@ BERRY_LOCAL const bntvmodule_t* const be_module_table[] = {
 #ifdef USE_UNISHOX_COMPRESSION
     &be_native_module(unishox),
 #endif // USE_UNISHOX_COMPRESSION
+
+#ifdef USE_WS2812
     &be_native_module(animate),
+#endif // USE_WS2812
 
 #ifdef USE_LVGL
     &be_native_module(lv),
@@ -207,8 +210,6 @@ be_extern_native_class(AXP202);
 be_extern_native_class(OneWire);
 be_extern_native_class(Leds_ntv);
 be_extern_native_class(Leds);
-be_extern_native_class(Leds_animator);
-be_extern_native_class(AudioOutput);
 be_extern_native_class(AudioGenerator);
 be_extern_native_class(AudioFileSource);
 be_extern_native_class(AudioOutputI2S);
@@ -216,6 +217,7 @@ be_extern_native_class(AudioGeneratorWAV);
 be_extern_native_class(AudioGeneratorMP3);
 be_extern_native_class(AudioFileSourceFS);
 be_extern_native_class(AudioOpusDecoder);
+be_extern_native_class(AudioInputI2S);
 be_extern_native_class(md5);
 be_extern_native_class(udp);
 be_extern_native_class(webclient);
@@ -276,7 +278,6 @@ BERRY_LOCAL bclass_array be_class_table = {
 #ifdef USE_WS2812
     &be_native_class(Leds_ntv),
     &be_native_class(Leds),
-    &be_native_class(Leds_animator),
 #endif // USE_WS2812
 #ifdef USE_ENERGY_SENSOR
     &be_native_class(energy_struct),
@@ -295,8 +296,7 @@ BERRY_LOCAL bclass_array be_class_table = {
     &be_native_class(lv_clock_icon),
 #endif // USE_LVGL
 
-#ifdef USE_I2S_AUDIO_BERRY
-    &be_native_class(AudioOutput),
+#if defined(USE_I2S_AUDIO_BERRY) && (ESP_IDF_VERSION_MAJOR >= 5)
     &be_native_class(AudioGenerator),
     &be_native_class(AudioFileSource),
     &be_native_class(AudioOutputI2S),
@@ -306,7 +306,8 @@ BERRY_LOCAL bclass_array be_class_table = {
     &be_native_class(AudioFileSourceFS),
 #endif // USE_UFILESYS
     &be_native_class(AudioOpusDecoder),
-#endif // USE_I2S_AUDIO_BERRY
+    &be_native_class(AudioInputI2S),
+#endif // defined(USE_I2S_AUDIO_BERRY) && (ESP_IDF_VERSION_MAJOR >= 5)
 #if defined(USE_BERRY_INT64) || defined(USE_MATTER_DEVICE)
     &be_native_class(int64),
 #endif

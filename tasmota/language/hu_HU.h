@@ -57,6 +57,7 @@
 #define D_AP "AP"                    // Access Point
 #define D_AS "mint"
 #define D_AUTO "AUTO"
+#define D_BATTERY "Battery"
 #define D_BATT "Batt"                // Short for Battery
 #define D_BATTERY_CHARGE "Charge"   // Battery charge in %
 #define D_BLINK "Villogás"
@@ -152,6 +153,7 @@
 #define D_POWER_FACTOR "Teljesítménytényező"
 #define D_POWERUSAGE "Energiafelhasználás"
 #define D_POWERUSAGE_ACTIVE "Aktív teljesítmény"
+#define D_POWERUSAGE_ACTIVE_TOTAL "Active Power Total"
 #define D_POWERUSAGE_APPARENT "Látszólagos teljesítmény"
 #define D_POWERUSAGE_REACTIVE "Reaktív teljesítmény"
 #define D_PRESSURE "Nyomás"
@@ -165,7 +167,6 @@
 #define D_RESTART "Újraindítás"
 #define D_RESTARTING "Újraindítás"
 #define D_RESTART_REASON "Utolsó újraindulás oka"
-#define D_RESTORE "Visszaállítás"
 #define D_RETAINED "megtartott"
 #define D_RULE "Szabály"
 #define D_SAVE "Mentés"
@@ -191,7 +192,6 @@
 #define D_TWILIGHT_ASTRONOMICAL "Astronomical"
 #define D_TWILIGHT_CIVIL "Civil"
 #define D_TWILIGHT_NAUTICAL "Nautical"
-#define D_UPGRADE "Frissítés"
 #define D_UPLOAD "Feltöltés"
 #define D_UPTIME "Üzemidő"
 #define D_USED "used"
@@ -275,7 +275,8 @@
 #define D_CONFIGURATION "Beállítások"
 #define D_INFORMATION "Információ"
 #define D_FIRMWARE_UPGRADE "Firmware frissítés"
-#define D_MANAGEMENT "Consoles"
+#define D_MANAGEMENT "Tools"
+#define D_GPIO_VIEWER "GPIO Viewer"
 #define D_CONSOLE "Konzol"
 #define D_CONFIRM_RESTART "Biztosan újraindítsam a modult?"
 
@@ -289,6 +290,7 @@
 #define D_RESET_CONFIGURATION "Beállítások törlése"
 #define D_BACKUP_CONFIGURATION "Beállítások mentése"
 #define D_RESTORE_CONFIGURATION "Beállítások visszatöltése"
+#define D_START_RESTORE "Start restore"
 #define D_MAIN_MENU "Menü"
 
 #define D_MODULE_PARAMETERS "Modul paraméterek"
@@ -306,6 +308,7 @@
 #define D_REFRESH_TO_SCAN_AGAIN "Frissíts az újrakereséshez"
 #define D_DUPLICATE_ACCESSPOINT "Duplikált access point"
 #define D_SKIPPING_LOW_QUALITY "Rossz, alacsony jelminőség"
+#define D_MODE "Mode"
 #define D_RSSI "RSSI"
 #define D_WEP "WEP"
 #define D_WPA_PSK "WPA PSK"
@@ -545,6 +548,22 @@
 #define D_DEVICE_INPUT "Bemenet"
 #define D_DEVICE_OUTPUT "Kimenet"
 
+// xdrv_39_thermostat.ino, xdrv_85_esp32_ble_eq3_trv.ino
+#define D_THERMOSTAT                  "Thermostat"
+#define D_THERMOSTAT_SET_POINT        "Set Point Temperature"
+#define D_THERMOSTAT_SENSOR           "Current Temperature"
+#define D_THERMOSTAT_GRADIENT         "Gradient Temperature"
+#define D_THERMOSTAT_DUTY_CYCLE       "Duty cycle"
+#define D_THERMOSTAT_CYCLE_TIME       "Cycle time"
+#define D_THERMOSTAT_PI_AUTOTUNE      "PI Auto tuning"
+#define D_THERMOSTAT_CONTROL_METHOD   "Control method"
+#define D_THERMOSTAT_RAMP_UP          "Ramp up"
+#define D_THERMOSTAT_PI               "PI"
+#define D_THERMOSTAT_AUTOTUNE         "Autotune"
+#define D_THERMOSTAT_RAMP_UP_HYBRID   "Ramp up (Hybrid)"
+#define D_THERMOSTAT_PI_HYBRID        "PI (Hybrid)"
+#define D_THERMOSTAT_AUTOTUNE_HYBRID  "Autotune (Hybrid)"
+
 // xsns_05_ds18b20.ino
 #define D_SENSOR_BUSY "Szenzor foglalt"
 #define D_SENSOR_CRC_ERROR "Szenzor CRC hiba"
@@ -655,6 +674,7 @@
 #define D_SENSOR_I2S_BCLK_IN   "I2S WS IN"
 #define D_SENSOR_I2S_DIN       "I2S DIN"
 #define D_SENSOR_I2S_DOUT      "I2S DOUT"
+#define D_SENSOR_I2S_DAC       "I2S DAC"
 #define D_SENSOR_HDMI_CEC      "HDMI CEC"
 #define D_SENSOR_WS2812        "WS2812"
 #define D_SENSOR_DFR562        "MP3 lejátszó"
@@ -672,6 +692,7 @@
 #define D_SENSOR_IRRECV        "IR vevő"
 #define D_SENSOR_MHZ_RX        "MHZ Rx"
 #define D_SENSOR_MHZ_TX        "MHZ Tx"
+#define D_SENSOR_HC8_RX        "HC8 Rx"
 #define D_SENSOR_PZEM004_RX    "PZEM004 Rx"
 #define D_SENSOR_PZEM016_RX    "PZEM016 Rx"
 #define D_SENSOR_PZEM017_RX    "PZEM017 Rx"
@@ -941,6 +962,7 @@
 #define D_SENSOR_BIOPDU_PZEM016_RX "BioPDU PZEM016 Rx"
 #define D_SENSOR_BIOPDU_BIT    "BioPDU Bit"
 #define D_SENSOR_LOX_O2_RX     "LoxO2 RX"
+#define D_GPIO_MAGIC_SWITCH "MagicSwitch"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -1204,5 +1226,9 @@
 // xsns_106_gdk101.ino
 #define D_AVG_RAD_DOSE                    "átlagos sugárdózis"
 #define D_UNIT_US_H                       "µSv/h"
+
+// ixrv92_pipsolar.ino
+#define D_SENSOR_PIPSOLAR_TX             "Pipsolar TX"
+#define D_SENSOR_PIPSOLAR_RX             "Pipsolar RX"
 
 #endif  // _LANGUAGE_HU_HU_H_
