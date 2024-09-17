@@ -12,6 +12,17 @@
 #include "be_mapping.h"
 #include "be_exec.h"
 #include <string.h>
+#include <stdlib.h>
+#include <math.h>
+
+#if BE_USE_SINGLE_FLOAT
+  #define mathfunc(func)        func##f
+#else
+  #define mathfunc(func)        func
+#endif
+
+/* Ubuntu 22.04 LTS seems to have an invalid or missing signature for strtok_r, forcing a correct one */
+extern char *strtok_r(char *str, const char *delim, char **saveptr);
 
 typedef intptr_t (*fn_any_callable)(intptr_t p0, intptr_t p1, intptr_t p2, intptr_t p3,
                                     intptr_t p4, intptr_t p5, intptr_t p6, intptr_t p7);
@@ -168,7 +179,7 @@ int be_find_global_or_module_member(bvm *vm, const char * name) {
 // if object instance, get `_p` member and convert it recursively
 intptr_t be_convert_single_elt(bvm *vm, int idx, const char * arg_type, int *buf_len) {
   // berry_log_C("be_convert_single_elt(idx=%i, argtype='%s', type=%s)", idx, arg_type ? arg_type : "", be_typename(vm, idx));
-  int ret = 0;
+  intptr_t ret = 0;
   char provided_type = 0;
   idx = be_absindex(vm, idx);   // make sure we have an absolute index
   
@@ -191,13 +202,13 @@ intptr_t be_convert_single_elt(bvm *vm, int idx, const char * arg_type, int *buf
         be_pop(vm, 3 + ret);
 
         // berry_log_C("func=%p", func);
-        return (int32_t) func;
+        return (intptr_t) func;
       } else {
         be_raisef(vm, "type_error", "Can't find callback generator: 'cb.make_cb'");
       }
     } else if (be_iscomptr(vm, idx)) {
       // if it's a pointer, just pass it without any change
-      return (int32_t) be_tocomptr(vm, idx);;
+      return (intptr_t) be_tocomptr(vm, idx);;
     } else {
       be_raise(vm, "type_error", "Closure expected for callback type");
     }
@@ -223,7 +234,15 @@ intptr_t be_convert_single_elt(bvm *vm, int idx, const char * arg_type, int *buf
     type_ok = type_ok || (arg_type[0] == provided_type && arg_type[1] == 0);      // or type is a match (single char only)
     type_ok = type_ok || (ret == 0 && arg_type_len != 1);     // or NULL is accepted for an instance
     type_ok = type_ok || (ret == 0 && arg_type[0] == 's' && arg_type[1] == 0);  // accept nil for string, can be dangerous
-    
+    if (!type_ok) {
+      if ((provided_type == 'f') && (arg_type[0] == 'i') && (arg_type[1] == 0)) {
+        // special case: float is accepted as int
+        breal v_real = be_toreal(vm, idx);
+        ret = mathfunc(round)(v_real);
+        provided_type = 'i';
+        type_ok = btrue;
+      }
+    }
     if (!type_ok) {
       be_raisef(vm, "type_error", "Unexpected argument type '%c', expected '%s'", provided_type, arg_type);
     }
@@ -236,7 +255,7 @@ intptr_t be_convert_single_elt(bvm *vm, int idx, const char * arg_type, int *buf
     // check if the instance is a subclass of `bytes()``
     if (be_isbytes(vm, idx)) {
       size_t len;
-      intptr_t ret = (intptr_t) be_tobytes(vm, idx, &len);
+      ret = (intptr_t) be_tobytes(vm, idx, &len);
       if (buf_len) { *buf_len = (int) len; }
       return ret;
     } else {
@@ -245,7 +264,7 @@ intptr_t be_convert_single_elt(bvm *vm, int idx, const char * arg_type, int *buf
         be_pop(vm, 1);    // remove `nil`
         be_getmember(vm, idx, ".p");
       } // else `nil` is on top of stack
-      int32_t ret = be_convert_single_elt(vm, -1, NULL, NULL);   // recurse
+      ret = be_convert_single_elt(vm, -1, NULL, NULL);   // recurse
       be_pop(vm, 1);
 
       if (arg_type_len > 1) {
@@ -314,7 +333,7 @@ int be_check_arg_type(bvm *vm, int arg_start, int argc, const char * arg_type, i
     p_idx++;
   }
 
-  for (uint32_t i = 0; i < argc; i++) {
+  for (int i = 0; i < argc; i++) {
     type_short_name[0] = 0;   // clear string
     // extract individual type
     if (arg_type) {
@@ -360,6 +379,9 @@ int be_check_arg_type(bvm *vm, int arg_start, int argc, const char * arg_type, i
       }
     }
     // berry_log_C(">> be_call_c_func arg %i, type %s", i, arg_type_check ? type_short_name : "<null>");
+    if (arg_type_check && type_short_name[0] == 0) {
+      be_raisef(vm, "value_error", "Too many arguments");
+    }
     p[p_idx] = be_convert_single_elt(vm, i + arg_start, arg_type_check ? type_short_name : NULL, (int*)&buf_len);
     // berry_log_C("< ret[%i]=%i", p_idx, p[p_idx]);
     p_idx++;

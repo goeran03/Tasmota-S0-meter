@@ -64,6 +64,9 @@ ftp       start stop ftp server: 0 = OFF, 1 = SDC, 2 = FlashFile
 #define UFS_TFAT          2
 #define UFS_TLFS          3
 
+#define UFS_SDC           0
+#define UFS_SDMMC         1
+
 /*
 // In tasmota.ino
 #ifdef ESP8266
@@ -97,6 +100,8 @@ uint8_t ufs_dir;
 // 0 = None, 1 = SD, 2 = ffat, 3 = littlefs
 uint8_t ufs_type;
 uint8_t ffs_type;
+// sd type 0 = SD spi interface, 1 = MMC interface
+uint8_t sd_type;
 
 struct {
   char run_file[48];
@@ -206,6 +211,7 @@ void UfsCheckSDCardInit(void) {
 #endif  // ESP32
 
       ufs_type = UFS_TSDC;
+      sd_type = UFS_SDC;
       dfsp = ufsp;
       if (ffsp) {ufs_dir = 1;}
       // make sd card the global filesystem
@@ -239,6 +245,7 @@ void UfsCheckSDCardInit(void) {
       ufsp = &SD_MMC;
 
       ufs_type = UFS_TSDC;
+      sd_type = UFS_SDMMC;
       dfsp = ufsp;
       if (ffsp) {ufs_dir = 1;}
       // make sd card the global filesystem
@@ -274,11 +281,29 @@ uint32_t UfsInfo(uint32_t sel, uint32_t type) {
       }
 #endif  // ESP8266
 #ifdef ESP32
+#ifdef SOC_SDMMC_HOST_SUPPORTED
+      if (sd_type == UFS_SDC) {
+        if (sel == 0) {
+          result = SD.totalBytes();
+        } else {
+          result = (SD.totalBytes() - SD.usedBytes());
+        }
+      } else if (sd_type == UFS_SDMMC) {
+        if (sel == 0) {
+          result = SD_MMC.totalBytes();
+        } else {
+          result = (SD_MMC.totalBytes() - SD_MMC.usedBytes());
+        }
+      } else {
+        result = 0;
+      }
+#else
       if (sel == 0) {
         result = SD.totalBytes();
       } else {
         result = (SD.totalBytes() - SD.usedBytes());
       }
+#endif // SOC_SDMMC_HOST_SUPPORTED
 #endif  // ESP32
 #endif  // USE_SDCARD
       break;
@@ -357,7 +382,7 @@ bool TfsFileExists(const char *fname){
 
   bool yes = ffsp->exists(fname);
   if (!yes) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("TFS: File '%s' not found"), fname +1);  // Skip leading slash
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TFS: File '%s' not found"), fname +1);  // Skip leading slash
   }
   return yes;
 }
@@ -431,7 +456,7 @@ bool TfsLoadFile(const char *fname, uint8_t *buf, uint32_t len) {
 
   File file = ffsp->open(fname, "r");
   if (!file) {
-    AddLog(LOG_LEVEL_INFO, PSTR("TFS: File '%s' not found"), fname +1);  // Skip leading slash
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TFS: File '%s' not found"), fname +1);  // Skip leading slash
     return false;
   }
 
@@ -536,6 +561,231 @@ bool UfsExecuteCommandFile(const char *fname) {
     return true;
   }
   return false;
+}
+
+/*********************************************************************************************\
+ * File JSON settings support using file /.drvset000
+ * 
+ * {"UserSet1":{"Param1":123,"Param2":"Text1"},"UserSet2":{"Param1":123,"Param2":"Text2"},"UserSet3":{"Param1":123,"Param2":"Text3"}}
+\*********************************************************************************************/
+
+bool _UfsJsonSettingsUpdate(const char* data) {
+  // Delete: Input UserSet2
+  // Append: Input {"UserSet2":{"Param1":123,"Param2":"Text2"}}
+
+  char filename[14];
+  snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_DRIVER), 0);  // /.drvset000
+  if (!TfsFileExists(filename)) { return false; }  // Error - File not found
+
+  char bfname[14];
+  strcpy_P(bfname, PSTR("/settmp"));
+  File ofile = ffsp->open(bfname, "w");
+  if (!ofile) { return false; }        // Error - unable to open temporary file
+  File ifile = ffsp->open(filename, "r");
+  if (!ifile) { 
+    ofile.close();
+    ffsp->remove(bfname);
+    return false;                      // Error - unable to open settings file
+  }
+
+  bool append = false;
+  char* key = (char*)data;
+  char key_pos[32];                    // Max key length
+  char *p = strchr(data, '"');
+  if (p) {
+    append = true;
+    char *q = strchr(++p, '"');
+    if (!q) { return false; }          // Error - No valid key provided in data to append
+    uint32_t len = (uint32_t)q - (uint32_t)p;
+    memcpy(key_pos, p, len);
+    key_pos[len] = '\0';               // key = UserSet2
+    key = key_pos;
+  }
+
+  char buffer[32];                     // Max key length
+  uint8_t buf[1];
+  uint32_t index = 0;
+  uint32_t bracket_count = 0;
+  int entries = 0;
+  bool quote = false;
+  bool mine = false;
+  bool deleted = false;
+  while (ifile.available()) {          // Process file
+    ifile.read(buf, 1);
+    if (bracket_count > 1) {           // Copy or skip old data
+      if (!mine) {
+        ofile.write(buf, 1);           // Copy data
+      }
+      if (buf[0] == '}') {
+        bracket_count--;
+      }
+      else if (buf[0] == '{') {        // Next bracket
+        bracket_count++;
+      }
+    } else {
+      if (buf[0] == '}') {             // Last bracket
+        break;                         // End of file
+      }
+      else if (buf[0] == '{') {
+        bracket_count++;
+        if (bracket_count > 1) {       // Skip first bracket
+          entries++;
+        }
+      }
+      else if (buf[0] == '"') {
+        quote ^= 1;
+        if (quote) {
+          index = 0;
+        } else {
+          buffer[index] = '\0';        // End of key name
+          mine = (!strcasecmp(buffer, key));
+          if (mine) {
+            entries--;                 // Skip old data
+            deleted = true;
+          } else {
+            ofile.write((entries) ? (uint8_t*)",\"" : (uint8_t*)"{\"", 2);
+            ofile.write((uint8_t*)buffer, strlen(buffer));
+            ofile.write((uint8_t*)"\":{", 3);
+          }
+        }
+      }
+      else {
+        buffer[index++] = buf[0];      // Add key name
+        if (index > sizeof(buffer) -2) {
+          break;                       // Key name too long
+        }
+      }
+    }
+  }
+  ifile.close();
+  if (append) {
+    // Append new data
+    ofile.write((entries) ? (uint8_t*)"," : (uint8_t*)"{", 1);
+    ofile.write((uint8_t*)data +1, strlen(data) -1);
+  } else {
+    // Delete data
+    if (entries) {
+      ofile.write((uint8_t*)"}", 1);
+    }
+  }
+  ofile.close();
+
+  if (index > sizeof(buffer) -2) { 
+    // No changes
+    ffsp->remove(bfname);
+    return false;                      // Error - Key name too long
+  }
+  ffsp->remove(filename);
+  ffsp->rename(bfname, filename);
+  if (!append) {
+    // Delete data
+    if (!entries) {
+      ffsp->remove(filename);
+    }
+    return deleted;                    // State - 0 = Not found, 1 = Deleted
+  }
+  return true;                         // State - Append success
+}
+
+bool UfsJsonSettingsDelete(const char* key) {
+  // Delete: Input UserSet2
+  //         Output 0 = Not found, 1 = Deleted
+  return _UfsJsonSettingsUpdate(key);  // State - 0 = Not found, 1 = Deleted
+}
+
+bool UfsJsonSettingsWrite(const char* data) {
+  // Add new UserSet replacing present UserSet
+  // Input {"UserSet2":{"Param1":123,"Param2":"Text2"}}
+  // Output 0 = Error, 1 = Append success
+
+  String json = data;
+  JsonParser parser((char*)json.c_str());
+  JsonParserObject root = parser.getRootObject();
+  if (!root) { return false; }         // Error - invalid JSON
+
+  char filename[14];
+  snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_DRIVER), 0);  // /.drvset000
+  if (!TfsFileExists(filename)) {
+    return TfsSaveFile(filename, (uint8_t*)data, strlen(data));
+  }
+  return _UfsJsonSettingsUpdate(data); // State - 0 = Error, 1 = Append success
+}
+
+String UfsJsonSettingsRead(const char* key) {
+  // Read: Input UserSet2
+  //       Output "" = Error, {"Param1":123,"Param2":"Text2","Param3":[{"Param3a":1},{"Param3b":1}]} = Data
+  String data = "";
+  char filename[14];
+  snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_DRIVER), 0);      // /.drvset000
+  if (!TfsFileExists(filename)) { return data; }  // Error - File not found
+  File file = ffsp->open(filename, "r");
+  if (!file) { return data; }          // Error - unable to open settings file
+
+  Trim((char*)key);
+  char buffer[128];
+  uint8_t buf[1] = { 0 };
+  uint32_t index = 0;
+  uint32_t bracket_count = 0;
+  bool quote = false;
+  bool mine = false;
+  while (file.available()) {           // Process file
+    file.read(buf, 1);
+    if (bracket_count > 1) {           // Build JSON
+      if (mine) {
+        buffer[index++] = buf[0];      // Add key data
+        if (index > sizeof(buffer) -2) {
+          buffer[index] = '\0'; 
+          data += buffer;              // Add buffer to result
+          index = 0;
+        }
+      }
+      if (buf[0] == '}') {
+        bracket_count--;
+        if (1 == bracket_count) {
+          if (mine) {
+            break;                     // End of key data
+          } else {
+            index = 0;                 // End of data which is not mine
+          }
+        }
+      }
+      else if (buf[0] == '{') {        // Next bracket
+        bracket_count++;
+      }
+    } else {
+      if (buf[0] == '}') {             // Last bracket
+        index = 0;
+        break;                         // End of file - key not found
+      }
+      else if (buf[0] == '{') {
+        bracket_count++;
+        if (bracket_count > 1) {       // Skip first bracket
+          index = 0;
+          buffer[index++] = buf[0];    // Start of key data
+        }
+      }
+      else if (buf[0] == '"') {
+        quote ^= 1;
+        if (quote) {
+          index = 0;
+        } else {
+          buffer[index] = '\0';        // End of key name
+          mine = (!strcasecmp(buffer, key));
+        }
+      }
+      else {
+        buffer[index++] = buf[0];      // Add key name
+        if (index > sizeof(buffer) -2) {
+          index = 0;
+          break;                       // Key name too long
+        }
+      }
+    }
+  }
+  file.close();
+  buffer[index] = '\0';
+  data += buffer;
+  return data;                         // State - "" = Error, {"Param1":123,"Param2":"Text2"} = Data
 }
 
 /*********************************************************************************************\
@@ -664,14 +914,19 @@ void UFSRename(void) {
 */
 #include "detail/RequestHandlersImpl.h"
 
+//#define SERVING_DEBUG
+
 // class to allow us to request auth when required.
 // StaticRequestHandler is in the above header
 class StaticRequestHandlerAuth : public StaticRequestHandler {
 public:
-    StaticRequestHandlerAuth(FS& fs, const char* path, const char* uri, const char* cache_header):
+    StaticRequestHandlerAuth(FS& fs, const char* path, const char* uri, const char* cache_header, bool requireAuth):
       StaticRequestHandler(fs, path, uri, cache_header)
     {
+      _requireAuth = requireAuth;
     }
+
+    bool _requireAuth;
 
     // we replace the handle method, 
     // and look for authentication only if we would serve the file.
@@ -681,8 +936,10 @@ public:
         if (!canHandle(requestMethod, requestUri))
             return false;
 
-        log_v("StaticRequestHandler::handle: request=%s _uri=%s\r\n", requestUri.c_str(), _uri.c_str());
-
+        //log_v("StaticRequestHandler::handle: request=%s _uri=%s\r\n", requestUri.c_str(), _uri.c_str());
+#ifdef SERVING_DEBUG
+        AddLog(LOG_LEVEL_DEBUG, PSTR("UFS: ::handle: request=%s _uri=%s"), requestUri.c_str(), _uri.c_str());
+#endif
         String path(_path);
 
         if (!_isFile) {
@@ -694,8 +951,9 @@ public:
             // Append whatever follows this URI in request to get the file path.
             path += requestUri.substring(_baseUriLength);
         }
-        log_v("StaticRequestHandler::handle: path=%s, isFile=%d\r\n", path.c_str(), _isFile);
-
+#ifdef SERVING_DEBUG
+        AddLog(LOG_LEVEL_DEBUG, PSTR("UFS: ::handle: path=%s, isFile=%d"), path.c_str(), _isFile);
+#endif
         String contentType = getContentType(path);
 
         // look for gz file, only if the original specified path is not a gz.  So part only works to send gzip via content encoding when a non compressed is asked for
@@ -707,11 +965,17 @@ public:
         }
 
         File f = _fs.open(path, "r");
-        if (!f || !f.available())
+        if (!f || !f.available()){
+            AddLog(LOG_LEVEL_DEBUG, PSTR("UFS: ::handler missing file?"));
             return false;
-
-        if (!WebAuthenticate()) {
+        }
+#ifdef SERVING_DEBUG
+        AddLog(LOG_LEVEL_DEBUG, PSTR("UFS: ::handler file open %d"), f.available());
+#endif
+        if (_requireAuth && !WebAuthenticate()) {
+#ifdef SERVING_DEBUG
           AddLog(LOG_LEVEL_ERROR, PSTR("UFS: serv of %s denied"), requestUri.c_str());
+#endif          
           server.requestAuthentication();
           return true;
         }
@@ -719,40 +983,76 @@ public:
         if (_cache_header.length() != 0)
             server.sendHeader("Cache-Control", _cache_header);
 
-        server.streamFile(f, contentType);
+#ifdef SERVING_DEBUG
+        AddLog(LOG_LEVEL_DEBUG, PSTR("UFS: ::handler sending"));
+#endif
+        uint8_t buff[512];
+        uint32_t bread;
+        uint32_t flen = f.available();
+        WiFiClient download_Client = server.client();
+        server.setContentLength(flen);   
+        server.send(200, contentType, "");
+
+        // transfer is about 150kb/s
+        uint32_t cnt = 0;
+        while (f.available()) {
+          bread = f.read(buff, sizeof(buff));
+          cnt += bread;
+#ifdef SERVING_DEBUG
+          //AddLog(LOG_LEVEL_DEBUG, PSTR("UFS: ::handler sending %d/%d"), cnt, flen);
+#endif          
+          uint32_t bw = download_Client.write((const char*)buff, bread);
+          if (!bw) { break; }
+          yield();
+        }
+#ifdef SERVING_DEBUG
+        AddLog(LOG_LEVEL_DEBUG, PSTR("UFS: ::handler sent %d/%d"), cnt, flen);
+#endif
+
+        if (cnt != flen){
+          AddLog(LOG_LEVEL_ERROR, PSTR("UFS: ::handler incomplete file send: sent %d/%d"), cnt, flen);
+        }
+
+        // It does seem that on lesser ESP32, this causes a problem?  A lockup...
+        //server.streamFile(f, contentType);
+
+        f.close();
+        download_Client.stop();
+
+#ifdef SERVING_DEBUG
+        AddLog(LOG_LEVEL_DEBUG, PSTR("UFS: ::handler done"));
+#endif        
         return true;
     }
 };
 
 void UFSServe(void) {
+  bool result = false;
   if (XdrvMailbox.data_len > 0) {
-    bool result = false;
     char *fpath = strtok(XdrvMailbox.data, ",");
     char *url = strtok(nullptr, ",");
     char *noauth = strtok(nullptr, ",");
     if (fpath && url) {
-      char t[] = "";
-      StaticRequestHandlerAuth *staticHandler;
-      if (noauth && *noauth == '1'){
-        staticHandler = (StaticRequestHandlerAuth *) new StaticRequestHandler(*ffsp, fpath, url, (char *)nullptr);
-      } else {
-        staticHandler = new StaticRequestHandlerAuth(*ffsp, fpath, url, (char *)nullptr);
-      }
-      if (staticHandler) {
-        //Webserver->serveStatic(url, *ffsp, fpath);
-        Webserver->addHandler(staticHandler);
-        Webserver->enableCORS(true);
-        result = true;
-      } else {
-        // could this happen?  only lack of memory.
-        result = false;
+      if (Webserver) { // fail if no Webserver yet.
+        StaticRequestHandlerAuth *staticHandler;
+        if (noauth && *noauth == '1'){
+          staticHandler = new StaticRequestHandlerAuth(*ffsp, fpath, url, (char *)nullptr, false);
+        } else {
+          staticHandler = new StaticRequestHandlerAuth(*ffsp, fpath, url, (char *)nullptr, true);
+        }
+        if (staticHandler) {
+          //Webserver->serveStatic(url, *ffsp, fpath);
+          Webserver->addHandler(staticHandler);
+          Webserver->enableCORS(true);
+          result = true;
+        }
       }
     }
-    if (!result) {
-      ResponseCmndFailed();
-    } else {
-      ResponseCmndDone();
-    }
+  }
+  if (!result) {
+    ResponseCmndFailed();
+  } else {
+    ResponseCmndDone();
   }
 }
 #endif // UFILESYS_STATIC_SERVING
@@ -1096,6 +1396,8 @@ void UfsListDir(char *path, uint8_t depth) {
                           HtmlEscape(name).c_str(), tstr.c_str(), entry.size(), delpath, editpath);
         }
         entry.close();
+
+        yield(); // trigger watchdog reset
       }
     }
     dir.close();

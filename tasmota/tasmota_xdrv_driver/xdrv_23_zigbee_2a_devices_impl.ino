@@ -323,7 +323,7 @@ bool Z_Device::setEPName(uint8_t ep, const char * name) {
 }
 
 void Z_Device::setStringAttribute(char*& attr, const char * str) {
-  if (nullptr == str)  { str = PSTR(""); }    // nullptr is considered empty string
+  if (nullptr == str)  { str = ""; }    // nullptr is considered empty string, don't use PROGMEM to avoid crash
   size_t str_len = strlen(str);
 
   if ((nullptr == attr) && (0 == str_len)) { return; } // if both empty, don't do anything
@@ -587,6 +587,11 @@ void Z_Devices::jsonAppend(uint16_t shortaddr, const Z_attribute_list &attr_list
 // internal function to publish device information with respect to all `SetOption`s
 //
 void Z_Device::jsonPublishAttrList(const char * json_prefix, const Z_attribute_list &attr_list, bool include_time) const {
+#ifdef USE_BERRY
+    // Publish to Berry
+    callBerryZigbeeDispatcher("attributes_final", nullptr, &attr_list, shortaddr);
+#endif // USE_BERRY
+
   const char * local_friendfly_name;     // friendlyname publish can depend on the source endpoint
   local_friendfly_name = ep_names.getEPName(attr_list.src_ep);    // check if this ep has a specific name
   if (local_friendfly_name == nullptr) {

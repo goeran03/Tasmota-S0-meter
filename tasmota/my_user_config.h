@@ -71,11 +71,21 @@
 #define WIFI_DNS               "192.168.1.1"     // [IpAddress4] If not using DHCP set DNS1 IP address (might be equal to WIFI_GATEWAY)
 #define WIFI_DNS2              "0.0.0.0"         // [IpAddress5] If not using DHCP set DNS2 IP address (might be equal to WIFI_GATEWAY)
 
+#ifndef STA_SSID1
 #define STA_SSID1              ""                // [Ssid1] Wi-Fi SSID
+#endif
+#ifndef STA_PASS1
 #define STA_PASS1              ""                // [Password1] Wi-Fi password
+#endif
+#ifndef STA_SSID2
 #define STA_SSID2              ""                // [Ssid2] Optional alternate AP Wi-Fi SSID
+#endif
+#ifndef STA_PASS2
 #define STA_PASS2              ""                // [Password2] Optional alternate AP Wi-Fi password
+#endif
+#ifndef WIFI_AP_PASSPHRASE
 #define WIFI_AP_PASSPHRASE     ""                // AccessPoint passphrase. For WPA2 min 8 char, for open use "" (max 63 char).
+#endif
 #define WIFI_CONFIG_TOOL       WIFI_RETRY        // [WifiConfig] Default tool if Wi-Fi fails to connect (default option: 4 - WIFI_RETRY)
                                                  // (WIFI_RESTART, WIFI_MANAGER, WIFI_RETRY, WIFI_WAIT, WIFI_SERIAL, WIFI_MANAGER_RESET_ONLY)
                                                  // The configuration can be changed after first setup using WifiConfig 0, 2, 4, 5, 6 and 7.
@@ -84,6 +94,7 @@
 #define WIFI_SCAN_AT_RESTART   false             // [SetOption56] Scan Wi-Fi network at restart for configured AP's
 #define WIFI_SCAN_REGULARLY    true              // [SetOption57] Scan Wi-Fi network every 44 minutes for configured AP's
 #define WIFI_NO_SLEEP          false             // [SetOption127] Sets Wifi in no-sleep mode which improves responsiveness on some routers
+#define WIFI_DEFAULT_HOSTNAME  "%s-%04d"         // [Hostname] Expands to <MQTT_TOPIC>-<last 4 decimal chars of MAC address>
 
 // -- Syslog --------------------------------------
 #define SYS_LOG_HOST           ""                // [LogHost] (Linux) syslog host
@@ -101,8 +112,9 @@
 #define MQTT_WIFI_CLIENT_TIMEOUT 200             // [MqttWifiTimeout] Number of milliseconds before Mqtt Wi-Fi timeout
 
 #define MQTT_HOST              ""                // [MqttHost]
+
 #define MQTT_FINGERPRINT1      0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00  // [MqttFingerprint1] (auto-learn)
-#define MQTT_FINGERPRINT2      0xDA,0x39,0xA3,0xEE,0x5E,0x6B,0x4B,0x0D,0x32,0x55,0xBF,0xEF,0x95,0x60,0x18,0x90,0xAF,0xD8,0x07,0x09  // [MqttFingerprint2] (invalid)
+#define MQTT_FINGERPRINT2      0xDA,0x39,0xA3,0xEE,0x5E,0x6B,0x4B,0x0D,0x32,0x55,0xBF,0xEF,0x95,0x60,0x18,0x90,0xAF,0xD8,0x07,0x09  // [MqttFingerprint2] (invalid - value from sha1(""))
 #define MQTT_PORT              1883              // [MqttPort] MQTT port (10123 on CloudMQTT)
 #define MQTT_USER              "DVES_USER"       // [MqttUser] MQTT user
 #define MQTT_PASS              "DVES_PASS"       // [MqttPassword] MQTT password
@@ -271,7 +283,7 @@
 #define APP_BISTABLE_PULSE     40                // [SetOption45] Pulse time in ms for two coil bistable latching relays
 
 #define APP_NORMAL_SLEEP       false             // [SetOption60] Enable normal sleep instead of dynamic sleep
-#define APP_SLEEP              0                 // [Sleep] Sleep time to lower energy consumption (0 = Off, 1 - 250 mSec),
+#define TASMOTA_SLEEP          50                // [Sleep] Sleep time to lower energy consumption (0 = Off, value in milliseconds),
 #define PWM_MAX_SLEEP          10                // Sleep will be lowered to this value when light is on, to avoid flickering, and when buzzer is on for better on/off period accuracy
 
 #define KEY_DEBOUNCE_TIME      50                // [ButtonDebounce] Number of mSeconds button press debounce time
@@ -385,6 +397,8 @@
 //#define MY_LANGUAGE            zh_CN           // Chinese (Simplified) in China
 //#define MY_LANGUAGE            zh_TW           // Chinese (Traditional) in Taiwan
 
+//#define USE_HEAT_INDEX                           // Show calculated Heat index from temperature and humidity (+1k4 code)
+
 // -- Wifi Config tools ---------------------------
 #define WIFI_SOFT_AP_CHANNEL   1                 // Soft Access Point Channel number between 1 and 13 as used by Wi-Fi Manager web GUI
 #define USE_IMPROV                               // Add support for IMPROV serial protocol as used by esp-web-tools (+2k code)
@@ -396,6 +410,8 @@
 
 // -- ESP-NOW -------------------------------------
 //#define USE_TASMESH                              // Enable Tasmota Mesh using ESP-NOW (+11k code)
+//#define USE_TASMESH_HEARTBEAT                    // If enabled, the broker will detect when nodes come online and offline and send Birth and LWT messages over MQTT correspondingly
+//#define TASMESH_OFFLINE_DELAY  3                 // Maximum number of seconds since the last heartbeat before the broker considers a node to be offline
 
 // -- OTA -----------------------------------------
 //#define USE_ARDUINO_OTA                          // Add optional support for Arduino OTA with ESP8266 (+13k code)
@@ -415,9 +431,9 @@
 #define MQTT_LWT_OFFLINE       "Offline"         // MQTT LWT offline topic message
 #define MQTT_LWT_ONLINE        "Online"          // MQTT LWT online topic message
 
-#define MQTT_TELE_RETAIN       0                 // Tele messages may send retain flag (0 = off, 1 = on)
-#define MQTT_CLEAN_SESSION     1                 // Mqtt clean session connection (0 = No clean session, 1 = Clean session (default))
-#define MQTT_DISABLE_SSERIALRECEIVED 0           // 1 = Disable sserialreceived mqtt messages, 0 = Enable sserialreceived mqtt messages (default)
+#define MQTT_CLEAN_SESSION     1                 // [SetOption140] Mqtt clean session connection (0 = No clean session, 1 = Clean session (default))
+#define MQTT_DISABLE_SSERIALRECEIVED 0           // [SetOption147] 1 = Disable SSerialReceived/IrReceived mqtt messages, 0 = Enable these mqtt messages (default)
+#define MQTT_DISABLE_MODBUSRECEIVED  0           // [SetOption158] 1 = Disable ModbusReceived mqtt messages, 0 = Enable ModbusReceived mqtt messages (default)
 
 // -- MQTT - Domoticz -----------------------------
 #define USE_DOMOTICZ                             // Enable Domoticz (+6k code, +0.3k mem)
@@ -441,9 +457,6 @@
 //  #define USE_MQTT_AWS_IOT                       // [Deprecated] Enable MQTT for AWS IoT - requires a private key (+11.9k code, +0.4k mem)
                                                  //   Note: you need to generate a private key + certificate per device and update 'tasmota/tasmota_aws_iot.cpp'
                                                  //   Full documentation here: https://github.com/arendst/Tasmota/wiki/AWS-IoT
-//  #define USE_MQTT_TLS_DROP_OLD_FINGERPRINT      // If you use fingerprint (i.e. not CA) validation, the algorithm changed to a more secure one.
-                                                   // Any valid fingerprint with the old algo will be automatically updated to the new algo.
-                                                   // Enable this if you want to disable the old algo check, which should be more secure
 //  for USE_4K_RSA (support for 4096 bits certificates, instead of 2048), you need to uncommend `-DUSE_4K_RSA` in `build_flags` from `platform.ini` or `platform_override.ini`
 
 // -- MQTT - TLS - Azure IoT & IoT Central ---------
@@ -456,7 +469,7 @@
 
 // -- Telegram Protocol ---------------------------
 //#define USE_TELEGRAM                             // Support for Telegram protocol (+49k code, +7.0k mem and +4.8k additional during connection handshake)
-  #define USE_TELEGRAM_FINGERPRINT "\xB2\x72\x47\xA6\x69\x8C\x3C\x69\xF9\x58\x6C\xF3\x60\x02\xFB\x83\xFA\x8B\x1F\x23" // Telegram api.telegram.org TLS public key fingerpring
+  #define USE_TELEGRAM_FINGERPRINT "\x4E\x7F\xF5\x6D\x1E\x29\x40\x58\xAB\x84\xDE\x63\x69\x7B\xCD\xDF\x44\x2E\xD2\xF6" // Telegram api.telegram.org TLS public key fingerpring
 
 // -- KNX IP Protocol -----------------------------
 //#define USE_KNX                                  // Enable KNX IP Protocol Support (+9.4k code, +3k7 mem)
@@ -470,8 +483,8 @@
   #define USE_ENHANCED_GUI_WIFI_SCAN             // Enable Wi-Fi scan output with BSSID (+0k5 code)
 //  #define USE_WEBSEND_RESPONSE                   // Enable command WebSend response message (+1k code)
 //  #define USE_WEBGETCONFIG                       // Enable restoring config from external webserver (+0k6)
-//  #define USE_GPIO_VIEWER                        // Enable GPIO Viewer to see realtime GPIO states (+4k code)
-//    #define GV_BASE_URL           "https://thelastoutpostworkshop.github.io/microcontroller_devkit/gpio_viewer/assets/"
+//  #define USE_WEBRUN                             // Enable executing a tasmota command file from external web server (+0.4 code)
+//  #define USE_GPIO_VIEWER                        // Enable GPIO Viewer to see realtime GPIO states (+6k code)
 //    #define GV_SAMPLING_INTERVAL  100            // [GvSampling] milliseconds - Use Tasmota Scheduler (100) or Ticker (20..99,101..1000)
   #define USE_EMULATION_HUE                      // Enable Hue Bridge emulation for Alexa (+14k code, +2k mem common)
   #define USE_EMULATION_WEMO                     // Enable Belkin WeMo emulation for Alexa (+6k code, +2k mem common)
@@ -708,10 +721,18 @@
 //  #define USE_QMC5883L                           // [I2CDriver71] Enable QMC5883L magnetic induction sensor (I2C address 0x0D) (+0k8 code)
 //  #define USE_HMC5883L                           // [I2CDriver73] Enable HMC5883L magnetic induction sensor (I2C address 0x1E) (+1k3 code)
 //    #define QMC5883L_TEMP_SHIFT       23         // sensor temperature are not calibrated (only relativ measurement) and need an absolute ground value in °C (see datasheet)
+//    #define QMC5883L_OVERSAMPLE       0          // 0 .. 3 => 512(default), 256, 128, 64
+//    #define QMC5883L_GAUSS            1          // 0,1(default) => 2GAUSS, 8GAUSS(default)
+//    #define QMC5883L_FILTER           0          // 0 .. 3 => 10HZ(default), 50HZ, 100HZ, 200HZ
 //  #define USE_INA3221                            // [I2CDriver72] Enable INA3221 3-channel DC voltage and current sensor (I2C address 0x40-0x44) (+3.2k code)
 //    #define INA3221_ADDRESS1                     // allow to change the 1st address to search for INA3221 to 0x41..0x43
 //    #define INA3221_MAX_COUNT                    // change the number of devices to search for (default 4).
 //                                                 // Both settings together allow to limit searching for INA3221 to only a subset of addresses
+//    #define  INA3221_CALC_CHARGE_AH              // calculate charge in Ah
+//    #define  INA3221_CALC_ENERGY_WH              // calculate energy in Wh
+//    #define  INA3221_SUPPLY_SIDE      0x7777     // the driver adds the measured Shunt Voltage to the Bus Voltage 
+                                                   // for the cannel with a negativ shunt (shunt <0) thus showing the values of the supply side (IN+) 
+                                                   // additionaly the bits set (bit 0,1,2) enable the scanning of the voltage in the according channel
 //  #define USE_PMSA003I                           // [I2cDriver78] Enable PMSA003I Air Quality Sensor (I2C address 0x12) (+1k8 code)
 //  #define USE_GDK101                             // [I2cDriver79] Enable GDK101 sensor (I2C addresses 0x18 - 0x1B) (+1k2 code)
 //    #define GDK101_SHOW_FW_VERSION
@@ -725,17 +746,21 @@
 //  #define USE_PCA9557                            // [I2cDriver81] Enable PCA9557 8-bit I/O Expander (I2C addresses 0x18 - 0x1F) (+2k5 code)
 //  #define USE_MAX17043                           // [I2cDriver83] Enable MAX17043 fuel-gauge systems Lipo batteries sensor (I2C address 0x36) (+0k9 code)
 //  #define MAX17043_ALERT_THRESHOLD 32            // [I2cDriver83] Define the alert threshold for low battery level percentage 1-32
+//  #define USE_AMSX915                            // [I2CDriver86] Enable AMS5915/AMS6915 pressure/temperature sensor (+1k2 code)
+//  #define USE_SPL06_007                          // [I2cDriver87] Enable SPL06_007 pressure and temperature sensor (I2C addresses 0x76) (+2k5 code)
+//  #define USE_QMP6988                            // [I2cDriver88] Enable QMP6988 pressure and temperature sensor (I2C address 0x56 or 0x70) (+2k9 code)
 
 //  #define USE_RTC_CHIPS                          // Enable RTC chip support and NTP server - Select only one
-//    #define USE_DS3231                           // [I2cDriver26] Enable DS3231 RTC (I2C address 0x68) (+1k2 code)
+//    #define USE_DS3231                           // [I2cDriver26] Enable DS3231 RTC - used by Ulanzi TC001 (I2C address 0x68) (+1k2 code)
 //    #define DS3231_ENABLE_TEMP                   //   In DS3231 driver, enable the internal temperature sensor
-//    #define USE_BM8563                           // [I2cDriver59] Enable BM8563 RTC - found in M5Stack - support both I2C buses on ESP32 (I2C address 0x51) (+2.5k code)
-//    #define USE_PCF85363                         // [I2cDriver66] Enable PCF85363 RTC - found Shelly 3EM (I2C address 0x51) (+0k7 code)
+//    #define USE_BM8563                           // [I2cDriver59] Enable BM8563 RTC - used by M5Stack - support both I2C buses on ESP32 (I2C address 0x51) (+2.5k code)
+//    #define USE_PCF85363                         // [I2cDriver66] Enable PCF85363 RTC - used by Shelly 3EM (I2C address 0x51) (+0k7 code)
+//    #define USE_RX8010                           // [I2cDriver90] Enable RX8010 RTC - used by IOTTIMER - support both I2C buses on ESP32 (I2C address 0x32) (+0k7 code)
 
 //  #define USE_DISPLAY                            // Add I2C/TM1637/MAX7219 Display Support (+2k code)
     #define USE_DISPLAY_MODES1TO5                // Enable display mode 1 to 5 in addition to mode 0
     #define USE_DISPLAY_LCD                      // [DisplayModel 1] [I2cDriver3] Enable Lcd display (I2C addresses 0x27 and 0x3F) (+6k code)
-    #define USE_DISPLAY_SSD1306                  // [DisplayModel 2] [I2cDriver4] Enable SSD1306 Oled 128x64 display (I2C addresses 0x3C and 0x3D) (+16k code)
+    // REMOVED - #define USE_DISPLAY_SSD1306                  // [DisplayModel 2] [I2cDriver4] Enable SSD1306 Oled 128x64 display (I2C addresses 0x3C and 0x3D) (+16k code)
     #define USE_DISPLAY_MATRIX                   // [DisplayModel 3] [I2cDriver5] Enable 8x8 Matrix display (I2C adresseses see below) (+11k code)
       #define MTX_ADDRESS1     0x71              // [DisplayAddress1] I2C address of first 8x8 matrix module
       #define MTX_ADDRESS2     0x74              // [DisplayAddress2] I2C address of second 8x8 matrix module
@@ -765,8 +790,9 @@
 #endif  // USE_I2C
 
 //  #define USE_DISPLAY                            // Add I2C/TM1637/MAX7219 Display Support (+2k code)
-//    #define USE_DISPLAY_TM1637                   // [DisplayModel 15] Enable TM1637 Module
-//    #define USE_DISPLAY_MAX7219                  // [DisplayModel 19] Enable MAX7219 Module
+//    #define USE_DISPLAY_TM1637                   // [DisplayModel 15] Enable TM1637 Seven Segment Display Module (4-6 digits)
+//    #define USE_DISPLAY_MAX7219                  // [DisplayModel 15] Enable MAX7219 Seven Segment Display Module (8 digits)
+//    #define USE_DISPLAY_MAX7219_MATRIX           // [DisplayModel 19] Enable MAX7219 8x8 Matrix Display
 
 // -- Universal Display Driver ---------------------------------
 // #define USE_UNIVERSAL_DISPLAY                   // New universal display driver for both I2C and SPI
@@ -779,18 +805,22 @@
 //  #define USE_NRF24                              // Add SPI support for NRF24L01(+) (+2k6 code)
     #define USE_MIBLE                            // BLE-bridge for some Mijia-BLE-sensors (+4k7 code)
 //  #define USE_DISPLAY                            // Add SPI Display support for 320x240 and 480x320 TFT
-    #define USE_DISPLAY_ILI9341                  // [DisplayModel 4] Enable ILI9341 Tft 480x320 display (+19k code)
+    // REMOVED -- #define USE_DISPLAY_ILI9341                  // [DisplayModel 4] Enable ILI9341 Tft 480x320 display (+19k code)
 //    #define USE_DISPLAY_EPAPER_29                // [DisplayModel 5] Enable e-paper 2.9 inch display (+19k code)
 //    #define USE_DISPLAY_EPAPER_42                // [DisplayModel 6] Enable e-paper 4.2 inch display
-//    #define USE_DISPLAY_SSD1351                  // [DisplayModel 9] Enable SSD1351 module
+    // REMOVED -- #define USE_DISPLAY_SSD1351                  // [DisplayModel 9] Enable SSD1351 module
 //    #define USE_DISPLAY_RA8876                   // [DisplayModel 10] [I2cDriver39] (Touch)
 //    #define USE_DISPLAY_ST7789                   // [DisplayModel 12] Enable ST7789 module
-//    #define USE_DISPLAY_SSD1331                  // [DisplayModel 14] Enable SSD1331 module
+    // REMOVED -- #define USE_DISPLAY_SSD1331                  // [DisplayModel 14] Enable SSD1331 module
 //  #define USE_RC522                              // Add support for MFRC522 13.56Mhz Rfid reader (+6k code)
 //    #define USE_RC522_DATA_FUNCTION              // Add support for reading data block content (+0k4 code)
 //    #define USE_RC522_TYPE_INFORMATION           // Add support for showing card type (+0k4 code)
 //  #define USE_MCP2515                            // Add support for can bus using MCP2515 (+7k code)
 //  #define USE_CANSNIFFER                         // Add support for can bus sniffer using MCP2515 (+5k code)
+//  #define USE_SPI_LORA                           // Add support for LoRaSend and LoRaCommand (+4k code)
+//    #define USE_LORA_SX126X                      // Add driver support for LoRa on SX126x based devices like LiliGo T3S3 Lora32 (+16k code)
+//    #define USE_LORA_SX127X                      // Add driver support for LoRa on SX127x based devices like M5Stack LoRa868, RFM95W (+5k code)
+//    #define USE_LORAWAN_BRIDGE                   // Add support for LoRaWan bridge (+8k code)
 
 #endif  // USE_SPI
 
@@ -854,6 +884,7 @@
 //#define USE_GM861                                // Add support for GM861 1D and 2D Bar Code Reader (+1k3 code)
 //  #define GM861_DECODE_AIM                       // Decode AIM-id (+0k3 code)
 //  #define GM861_HEARTBEAT                        // Enable heartbeat (+0k2 code)
+//#define USE_WOOLIIS                              // Add support for Wooliis Hall Effect Coulometer or Battery capacity monitor (+1k6 code)
 
 // -- Power monitoring sensors --------------------
 #define USE_ENERGY_SENSOR                        // Add support for Energy Monitors (+14k code)
@@ -877,6 +908,7 @@
 //#define USE_SDM630                               // Add support for Eastron SDM630-Modbus energy monitor (+0k6 code)
   #define SDM630_SPEED         9600              // SDM630-Modbus RS485 serial speed (default: 9600 baud)
 //  #define SDM630_IMPORT                          // Show import active energy in MQTT and Web (+0k3 code)
+//  #define SDM630_HIGH_UPDATE_RATE                //  SDM630-Modbus improved readout with higher update rate (+0k1 RAM)
 //#define USE_DDS2382                              // Add support for Hiking DDS2382 Modbus energy monitor (+0k6 code)
   #define DDS2382_SPEED        9600              // Hiking DDS2382 Modbus RS485 serial speed (default: 9600 baud)
 //#define USE_DDSU666                              // Add support for Chint DDSU666 Modbus energy monitor (+0k6 code)
@@ -996,6 +1028,9 @@
   #define USE_ZIGBEE_MAXTIME_LIGHT          60*60     // 1h
   #define USE_ZIGBEE_MAXTIME_LIFT           4*60*60   // 4h
 
+// -- Matter support (ESP32 and variants) ----------------------------
+#define MATTER_ENABLED    false                    // [SetOption151] Is Matter enabled by default
+
 // -- Other sensors/drivers -----------------------
 
 //#define USE_SHIFT595                             // Add support for 74xx595 8-bit shift registers (+0k7 code)
@@ -1009,6 +1044,7 @@
 //  #define TM1638_MAX_KEYS        8               // Add support for 8 keys
 //  #define TM1638_MAX_LEDS        8               // Add support for 8 leds
 //#define USE_HX711                                // Add support for HX711 load cell (+1k5 code)
+//  #define USE_HX711_M5SCALES                     // [I2cDriver89] Enable support for M5Unit (Mini)Scales (I2C address 0x26) (+0k4 code)
 //  #define USE_HX711_GUI                          // Add optional web GUI to HX711 as scale (+1k8 code)
 //  #define HX711_CAL_PRECISION     1              // When HX711 calibration is to course, raise this value
 
@@ -1089,6 +1125,8 @@
 
 #ifdef ESP32
 
+//#define USE_ESP32_WDT                            // Enable Watchdog for ESP32, trigger a restart if loop has not responded for 5s, and if `yield();` was not called
+
 #define SET_ESP32_STACK_SIZE  (8 * 1024)         // Set the stack size for Tasmota. The default value is 8192 for Arduino, some builds might need to increase it
 
 #ifdef SOC_TOUCH_VERSION_1                       // ESP32
@@ -1099,6 +1137,7 @@
 #endif
 
 #define USE_ESP32_SENSORS                        // Add support for ESP32 temperature and optional hall effect sensor
+#define USE_GPIO_VIEWER                          // Enable GPIO Viewer to see realtime GPIO states (+5k6 code)
 
 // #define USE_DALI                              // Add support for DALI
     #define DALI_IN_INVERT  0                 // DALI RX inverted ?
@@ -1110,15 +1149,15 @@
 
 //#define USE_ETHERNET                             // Add support for ethernet (+20k code)
 //  #define USE_WT32_ETH01                         // Add support for Wireless-Tag WT32-ETH01
-//  #define ETH_TYPE          0                    // [EthType] 0 = ETH_PHY_LAN8720, 1 = ETH_PHY_TLK110/ETH_PHY_IP101, 2 = ETH_PHY_RTL8201, 3 = ETH_PHY_DP83848, 4 = ETH_PHY_DM9051, 5 = ETH_PHY_KSZ8081
+//  #define ETH_TYPE          0                    // [EthType] 0 = LAN8720, 1 = TLK110/IP101, 2 = RTL8201, 3 = DP83848, 4 = DM9051, 5 = KSZ8081, 6 = KSZ8041, 7 = JL1101, 8 = W5500, 9 = KSZ8851
 //  #define ETH_ADDRESS       1                    // [EthAddress] 0 = PHY0 .. 31 = PHY31
 //  #define ETH_CLKMODE       0                    // [EthClockMode] 0 = ETH_CLOCK_GPIO0_IN, 1 = ETH_CLOCK_GPIO0_OUT, 2 = ETH_CLOCK_GPIO16_OUT, 3 = ETH_CLOCK_GPIO17_OUT
   // Olimex ESP32-PoE
-  #define ETH_TYPE          0                    // [EthType] 0 = ETH_PHY_LAN8720, 1 = ETH_PHY_TLK110/ETH_PHY_IP101, 2 = ETH_PHY_RTL8201, 3 = ETH_PHY_DP83848, 4 = ETH_PHY_DM9051, 5 = ETH_PHY_KSZ8081
+  #define ETH_TYPE          0                    // [EthType] 0 = LAN8720, 1 = TLK110/IP101, 2 = RTL8201, 3 = DP83848, 4 = DM9051, 5 = KSZ8081, 6 = KSZ8041, 7 = JL1101, 8 = W5500, 9 = KSZ8851
   #define ETH_ADDRESS       0                    // [EthAddress] 0 = PHY0 .. 31 = PHY31
   #define ETH_CLKMODE       3                    // [EthClockMode] 0 = ETH_CLOCK_GPIO0_IN, 1 = ETH_CLOCK_GPIO0_OUT, 2 = ETH_CLOCK_GPIO16_OUT, 3 = ETH_CLOCK_GPIO17_OUT
   // wESP32-PoE
-//  #define ETH_TYPE          0                    // [EthType] 0 = ETH_PHY_LAN8720, 1 = ETH_PHY_TLK110/ETH_PHY_IP101, 2 = ETH_PHY_RTL8201, 3 = ETH_PHY_DP83848, 4 = ETH_PHY_DM9051, 5 = ETH_PHY_KSZ8081
+//  #define ETH_TYPE          0                    // [EthType] 0 = LAN8720, 1 = TLK110/IP101, 2 = RTL8201, 3 = DP83848, 4 = DM9051, 5 = KSZ8081, 6 = KSZ8041, 7 = JL1101, 8 = W5500, 9 = KSZ8851
 //  #define ETH_ADDRESS       0                    // [EthAddress] 0 = PHY0 .. 31 = PHY31
 //  #define ETH_CLKMODE       0                    // [EthClockMode] 0 = ETH_CLOCK_GPIO0_IN, 1 = ETH_CLOCK_GPIO0_OUT, 2 = ETH_CLOCK_GPIO16_OUT, 3 = ETH_CLOCK_GPIO17_OUT
 
@@ -1172,49 +1211,56 @@
 // -- LVGL Graphics Library ---------------------------------
 //#define USE_LVGL                                 // LVGL Engine, requires Berry (+382KB)
   #define USE_LVGL_PSRAM                         // Allocate LVGL memory in PSRAM if PSRAM is connected - this might be slightly slower but leaves main memory intact
-  // #define USE_LVGL_HASPMOTA                      // Enable OpenHASP compatiblity and Robotocondensed fonts (+90KB flash)
+  #define USE_LVGL_HASPMOTA                      // Enable OpenHASP compatiblity and Robotocondensed fonts (+90KB flash)
   #define USE_LVGL_MAX_SLEEP  10                 // max sleep in ms when LVGL is enabled, more than 10ms will make display less responsive
   #define USE_LVGL_PNG_DECODER                   // include a PNG image decoder from file system (+16KB)
-  //#define USE_LVGL_TOUCHSCREEN                   // Use virtual touch screen with Berry driver
-  //#define USE_LVGL_FREETYPE                      // Use the FreeType renderer to display fonts using native TTF files in file system (+77KB flash)
-    #define LV_USE_FT_CACHE_MANAGER 1            // define whether glyphs are cached by FreeType library
+  #define USE_LVGL_FREETYPE                      // Use the FreeType renderer to display fonts using native TTF files in file system (+77KB flash)
     #define USE_LVGL_FREETYPE_MAX_FACES 64       // max number of FreeType faces in cache
-    #define USE_LVGL_FREETYPE_MAX_SIZES 4        // max number of sizes in cache
-    #define USE_LVGL_FREETYPE_MAX_BYTES 16*1024  // max bytes in cache
-    #define USE_LVGL_FREETYPE_MAX_BYTES_PSRAM 64*1024  // max bytes in cache when using PSRAM
   #define USE_LVGL_BG_DEFAULT 0x000000           // Default color for the uninitialized background screen (black)
   // Disabling select widgets that will be rarely used in Tasmota (-13KB)
   // Main widgets as defined in LVGL8
+    #define BE_LV_WIDGET_OBJ
     #define BE_LV_WIDGET_ARC
     #define BE_LV_WIDGET_BAR
-    #define BE_LV_WIDGET_BTN
-    #define BE_LV_WIDGET_BTNMATRIX
+    #define BE_LV_WIDGET_BTN        // LVGL 8
+    #define BE_LV_WIDGET_BUTTON     // LVGL 9
+    #define BE_LV_WIDGET_BTNMATRIX  // LVGL 8
+    #define BE_LV_WIDGET_BUTTONMATRIX // LVGL 9
     #define BE_LV_WIDGET_CANVAS
     #define BE_LV_WIDGET_CHECKBOX
     #define BE_LV_WIDGET_DROPDOWN
-    #define BE_LV_WIDGET_IMG
+    #define BE_LV_WIDGET_IMG        // LVGL 8
+    #define BE_LV_WIDGET_IMAGE      // LVGL 9
     #define BE_LV_WIDGET_LABEL
     #define BE_LV_WIDGET_LINE
     #define BE_LV_WIDGET_ROLLER
     #define BE_LV_WIDGET_SLIDER
     #define BE_LV_WIDGET_SWITCH
     #define BE_LV_WIDGET_TABLE
-    #define BE_LV_WIDGET_TEXTAREA
+    // #define BE_LV_WIDGET_TEXTAREA
 
+    #define BE_LV_WIDGET_ANIMIMG
     #define BE_LV_WIDGET_CHART
-    #define BE_LV_WIDGET_COLORWHEEL
-    #define BE_LV_WIDGET_IMGBTN
+    #define BE_LV_WIDGET_IMGBTN       // LVGL 8
+    #define BE_LV_WIDGET_IMAGEBUTTON  // LVGL 9
+    // #define BE_LV_WIDGET_KEYBOARD
     #define BE_LV_WIDGET_LED
+    #define BE_LV_WIDGET_LIST
     #define BE_LV_WIDGET_METER
     #define BE_LV_WIDGET_MSGBOX
-    #define BE_LV_WIDGET_SPINBOX
+    #define BE_LV_WIDGET_QRCODE
+    #define BE_LV_WIDGET_SCALE
+    #define BE_LV_WIDGET_SCALE_SECTION
+    // #define BE_LV_WIDGET_SPINBOX
     #define BE_LV_WIDGET_SPINNER
-    // #define BE_LV_WIDGET_KEYBOARD
+    #define BE_LV_WIDGET_SPANGROUP
+    #define BE_LV_WIDGET_SPAN
     // #define BE_LV_WIDGET_TABVIEW
     // #define BE_LV_WIDGET_TILEVIEW
-    // #define BE_LV_WIDGET_LIST
 
-    #define BE_LV_WIDGET_QRCODE
+// -- Matter protocol ---------------------------------
+  // #define USE_MATTER_DEVICE                      // Enable Matter device support (+380KB)
+                                                    // Enabled by default in standard ESP32 binary
 
 #endif  // ESP32
 
@@ -1329,5 +1375,18 @@
     #define SET_ESP32_STACK_SIZE (24 * 1024)
   #endif
 #endif // USE_LVGL && USE_LVGL_FREETYPE
+
+/*********************************************************************************************\
+ * Post-process I2S
+\*********************************************************************************************/
+
+#if defined(USE_I2S_ALL)
+  #define USE_I2S
+  #define USE_I2S_AUDIO
+  #define USE_I2S_MIC
+  #define USE_SHINE
+  #define MP3_MIC_STREAM
+  #define USE_I2S_AUDIO_BERRY
+#endif // USE_I2S_ALL
 
 #endif  // _MY_USER_CONFIG_H_

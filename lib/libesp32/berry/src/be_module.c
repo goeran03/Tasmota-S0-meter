@@ -355,7 +355,7 @@ int be_module_attr(bvm *vm, bmodule *module, bstring *attr, bvalue *dst)
 
 bbool be_module_setmember(bvm *vm, bmodule *module, bstring *attr, bvalue *src)
 {
-    assert(src);
+    be_assert(src);
     bmap *attrs = module->table;
     if (!gc_isconst(attrs)) {
         bvalue *v = be_map_findstr(vm, attrs, attr);
@@ -396,7 +396,7 @@ bbool be_module_setmember(bvm *vm, bmodule *module, bstring *attr, bvalue *src)
     return bfalse;
 }
 
-const char* be_module_name(bmodule *module)
+const char* be_module_name(const bmodule *module)
 {
     if (gc_isconst(module)) {
         return module->info.name;

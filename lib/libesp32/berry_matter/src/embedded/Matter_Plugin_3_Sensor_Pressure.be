@@ -29,7 +29,7 @@ class Matter_Plugin_Sensor_Pressure : Matter_Plugin_Sensor
   static var JSON_NAME = "Pressure"                 # Name of the sensor attribute in JSON payloads
   static var UPDATE_COMMANDS = matter.UC_LIST(_class, "Pressure")
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
-    0x0403: [0,1,2,0xFFFC,0xFFFD],                  # Pressure Measurement
+    0x0403: [0,1,2],                                # Pressure Measurement
   })
   static var TYPES = { 0x0305: 2 }                  # Pressure Sensor, rev 2
 
@@ -62,25 +62,32 @@ class Matter_Plugin_Sensor_Pressure : Matter_Plugin_Sensor
     # ====================================================================================================
     if   cluster == 0x0403              # ========== Pressure Measurement 2.4 p.98 ==========
       if   attribute == 0x0000          #  ---------- MeasuredValue / i16 ----------
-        if self.shadow_value != nil
-          return tlv_solo.set(TLV.I2, int(self.shadow_value))
-        else
-          return tlv_solo.set(TLV.NULL, nil)
-        end
+        return tlv_solo.set_or_nil(TLV.I2, int(self.shadow_value))
       elif attribute == 0x0001          #  ---------- MinMeasuredValue / i16 ----------
         return tlv_solo.set(TLV.I2, 500)  # 500 hPA
       elif attribute == 0x0002          #  ---------- MaxMeasuredValue / i16 ----------
         return tlv_solo.set(TLV.I2, 1500)  # 1500 hPA
-      elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return tlv_solo.set(TLV.U4, 0)    # 0 = no Extended Range
-      elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
-        return tlv_solo.set(TLV.U4, 3)    # 3 = New data model format and notation
       end
 
-    else
-      return super(self).read_attribute(session, ctx, tlv_solo)
     end
+    return super(self).read_attribute(session, ctx, tlv_solo)
   end
+
+  #############################################################
+  # For Bridge devices
+  #############################################################
+  #############################################################
+  # web_values
+  #
+  # Show values of the remote device as HTML
+  def web_values()
+    import webserver
+    self.web_values_prefix()        # display '| ' and name if present
+    webserver.content_send(format("&#x26C5; %i hPa",
+                                         int(self.shadow_value)))
+  end
+  #############################################################
+  #############################################################
 
 end
 matter.Plugin_Sensor_Pressure = Matter_Plugin_Sensor_Pressure

@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.4.0.1 - Last update 17.01.2024
+ * Updated until v9.4.0.1 - Last update 27.07.2024
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -76,6 +76,7 @@
 #define D_COMMAND              "Comando"
 #define D_CONNECTED            "Connesso"
 #define D_CORS_DOMAIN          "Dominio CORS"
+#define D_COLOR                "Colore"
 #define D_COUNT                "Conteggio"
 #define D_COUNTER              "Contatore"
 #define D_CT_POWER             "Alimentazione CT"
@@ -119,6 +120,7 @@
 #define D_GROUP                "Gruppo"
 #define D_HOST                 "Host"
 #define D_HALL_EFFECT          "Effetto hall"
+#define D_HEATINDEX            "Indice calore"
 #define D_HOSTNAME             "Nome host"
 #define D_HUMIDITY             "Umidità"
 #define D_ILLUMINANCE          "Illuminazione"
@@ -531,22 +533,27 @@
 #define D_CONFIGURE_DALI                  "DALI - Config"
 
 // xdrv_03_energy.ino
-#define D_ENERGY_TODAY      "Energia - oggi"
-#define D_ENERGY_YESTERDAY  "Energia  - ieri"
-#define D_ENERGY_TOTAL      "Energia - totale"
+#define D_ENERGY_TODAY                    "Energia - oggi"
+#define D_ENERGY_YESTERDAY                "Energia - ieri"
+#define D_ENERGY_TOTAL                    "Energia - totale"
+
+// xsns_100_ina3221.ino
+#define  D_UNIT_CHARGE                    "Ah"
+#define  D_CHARGE                         "Carica"
+#define  D_ENERGY                         "Energia"
 
 // xdrv_27_shutter.ino
-#define D_OPEN              "Apri"
-#define D_CLOSE             "Chiudi"
-#define D_DOMOTICZ_SHUTTER  "Serranda"
+#define D_OPEN                            "Apri"
+#define D_CLOSE                           "Chiudi"
+#define D_DOMOTICZ_SHUTTER                "Serranda"
 
 // xdrv_28_pcf8574.ino
-#define D_CONFIGURE_PCF8574   "PCF8574"
-#define D_PCF8574_PARAMETERS  "Parametri PCF8574"
-#define D_INVERT_PORTS        "Inverti porte"
-#define D_DEVICE              "Dispositivo"
-#define D_DEVICE_INPUT        "Ingresso"
-#define D_DEVICE_OUTPUT       "Uscita"
+#define D_CONFIGURE_PCF8574               "PCF8574"
+#define D_PCF8574_PARAMETERS              "Parametri PCF8574"
+#define D_INVERT_PORTS                    "Inverti porte"
+#define D_DEVICE                          "Dispositivo"
+#define D_DEVICE_INPUT                    "Ingresso"
+#define D_DEVICE_OUTPUT                   "Uscita"
 
 // xdrv_39_thermostat.ino, xdrv_85_esp32_ble_eq3_trv.ino
 #define D_THERMOSTAT                  "Termostato"
@@ -554,6 +561,7 @@
 #define D_THERMOSTAT_SENSOR           "Temperatura attuale"
 #define D_THERMOSTAT_GRADIENT         "Gradiente temperatura"
 #define D_THERMOSTAT_DUTY_CYCLE       "Ciclo lavoro"
+#define D_THERMOSTAT_VALVE_POSITION   "Posizione valvola"
 #define D_THERMOSTAT_CYCLE_TIME       "Tempo ciclo"
 #define D_THERMOSTAT_PI_AUTOTUNE      "Regolazione automatica  PI"
 #define D_THERMOSTAT_CONTROL_METHOD   "Metodo controllo"
@@ -656,6 +664,24 @@
 #define D_SIGNALSTRENGTH   "Livello segnale"
 #define D_CHIPTEMPERATURE  "Temperatura chip"
 
+// xsns_60_GPS
+#define D_LATITUDE             "Latitudine"
+#define D_LONGITUDE            "Longitudine"
+#define D_HORIZONTAL_ACCURACY  "Precisione orizzontale"
+#define D_ALTITUDE             "Altitudine"
+#define D_VERTICAL_ACCURACY    "Precisione verticale"
+#define D_SPEED                "Velocità"
+#define D_SPEED_ACCURACY       "Precisione velocità"
+#define D_HEADING              "Direzione"
+#define D_HEADING_ACCURACY     "Precisione direzione"
+#define D_SAT_FIX              "Aggancio satelliti"
+#define D_SAT_FIX_NO_FIX       "Nessuno"
+#define D_SAT_FIX_DEAD_RECK    "Navigazione stimata"
+#define D_SAT_FIX_2D           "2D"
+#define D_SAT_FIX_3D           "3D"
+#define D_SAT_FIX_GPS_DEAD     "GPS e navigazione stimata"
+#define D_SAT_FIX_TIME         "Solo corrzione orario"
+
 // tasmota_template.h - keep them as short as possible to be able to fit them in GUI drop down box
 #define D_SENSOR_NONE                   "Nessuno"
 #define D_SENSOR_USER                   "Utente"
@@ -704,6 +730,10 @@
 #define D_SENSOR_SPI_MISO               "SPI - MISO"
 #define D_SENSOR_SPI_MOSI               "SPI - MOSI"
 #define D_SENSOR_SPI_CLK                "SPI - CLK"
+#define D_SENSOR_SDIO_CMD               "SDIO - CMD"
+#define D_GPIO_TS_SPI_CS                "TS - SPI CS"
+#define D_GPIO_TS_RST                   "TS - RST"
+#define D_GPIO_TS_IRQ                   "TS - IRQ"
 #define D_SENSOR_SDIO_CMD               "SDIO - CMD"
 #define D_SENSOR_SDIO_CLK               "SDIO - CLK"
 #define D_SENSOR_SDIO_D0                "SDIO - D0"
@@ -775,6 +805,15 @@
 #define D_SENSOR_MAX31855_CLK           "MX31855 - CLK"
 #define D_SENSOR_MAX31855_DO            "MX31855 - DO"
 #define D_SENSOR_MAX31865_CS            "MX31865 - CS"
+#define D_GPIO_RN2XX3_TX                "RN2XX3 - TX"
+#define D_GPIO_RN2XX3_RX                "RN2XX3 - RX"
+#define D_GPIO_RN2XX3_RST               "RN2XX3 - Rst"
+#define D_GPIO_ASR650X_TX               "ASR650X - Tx"
+#define D_GPIO_ASR650X_RX               "ASR650X - Rx"
+#define D_GPIO_LORA_CS                  "LoRa - CS"
+#define D_GPIO_LORA_RST                 "LoRa - Rst"
+#define D_GPIO_LORA_BUSY                "LoRa - Busy"
+#define D_GPIO_LORA_DI                  "LoRa - DIO"    // Suffix "0","1","2"
 #define D_SENSOR_NRG_SEL                "HLWBL - SEL"     // Suffix "i"
 #define D_SENSOR_NRG_CF1                "HLWBL - CF1"
 #define D_SENSOR_HLW_CF                 "HLW8012 - CF"
@@ -786,6 +825,8 @@
 #define D_SENSOR_CSE7761_RX             "CSE7761 - RX"
 #define D_SENSOR_CSE7766_TX             "CSE7766 - TX"
 #define D_SENSOR_CSE7766_RX             "CSE7766 - RX"
+#define D_SENSOR_BL0939_RX              "BL0939 - RX"
+#define D_SENSOR_BL0942_RX              "BL0942 - RX"
 #define D_SENSOR_HM330X_SET             "HM330X - SET"
 #define D_SENSOR_PN532_TX               "PN532 - TX"
 #define D_SENSOR_PN532_RX               "PN532 - RX"
@@ -853,8 +894,6 @@
 #define D_SENSOR_LE01MR_RX              "LE-01MR - RX"
 #define D_SENSOR_LE01MR_TX              "LE-01MR - TX"
 #define D_SENSOR_BL0940_RX              "BL0940 - RX"
-#define D_SENSOR_BL0939_RX              "BL0939 - RX"
-#define D_SENSOR_BL0942_RX              "BL0942 - RX"
 #define D_SENSOR_CC1101_GDO0            "CC1101 - GDO0"
 #define D_SENSOR_CC1101_GDO2            "CC1101 - GDO2"
 #define D_SENSOR_HRXL_RX                "HRXL - RX"
@@ -874,6 +913,8 @@
 #define D_SENSOR_ADC_JOYSTICK           "ADC - Joystick"
 #define D_SENSOR_ADC_PH                 "ADC - pH"
 #define D_SENSOR_ADC_MQ                 "ADC - MQ"
+#define D_SENSOR_ADC_VOLTAGE            "ADC - Voltaggio"
+#define D_SENSOR_ADC_CURRENT            "ADC - Corrente"
 #define D_GPIO_WEBCAM_PWDN              "Webcam - PWDN"
 #define D_GPIO_WEBCAM_RESET             "Webcam - RESET"
 #define D_GPIO_WEBCAM_XCLK              "Webcam - XCLK"
@@ -890,6 +931,7 @@
 #define D_SENSOR_ETH_PHY_MDC            "ETH - MDC"
 #define D_SENSOR_ETH_PHY_MDIO           "ETH - MDIO"
 #define D_SENSOR_TCP_TXD                "TCP - TX"
+#define D_SENSOR_TCP_TXD_EN             "TCP - TX En"
 #define D_SENSOR_TCP_RXD                "TCP - RX"
 #define D_SENSOR_IEM3000_TX             "iEM3000 - TX"
 #define D_SENSOR_IEM3000_RX             "iEM3000 - RX"
@@ -960,6 +1002,7 @@
 #define D_SENSOR_BIOPDU_BIT             "BioPDU Bit"
 #define D_SENSOR_LOX_O2_RX              "LoxO2 - RX"
 #define D_GPIO_MAGIC_SWITCH             "MagicSwitch"
+#define D_SENSOR_WOOLIIS_RX             "Wooliis - RX"
 
 // Units
 #define D_UNIT_AMPERE                     "A"
@@ -984,6 +1027,7 @@
 #define D_UNIT_LITERS                     "L"
 #define D_UNIT_LITERS_PER_MIN             "L/m"
 #define D_UNIT_LUX                        "lx"
+#define D_UNIT_METER                      "m"
 #define D_UNIT_MICROGRAM_PER_CUBIC_METER  "µg/m³"
 #define D_UNIT_MICROMETER                 "µm"
 #define D_UNIT_MICROSECOND                "µs"
@@ -1221,11 +1265,18 @@
 #define D_NEOPOOL_PUMP_TIME_EXCEEDED      "tempo pompa superato"
 
 // xsns_106_gdk101.ino
+//#define D_AVG_RAD_DOSE                  "Average Radiation Dose"
 #define D_AVG_RAD_DOSE                    "Radiazioni"
 #define D_UNIT_US_H                       "µSv/h"
 
 // ixrv92_pipsolar.ino
-#define D_SENSOR_PIPSOLAR_TX             "Pipsolar - TX"
-#define D_SENSOR_PIPSOLAR_RX             "Pipsolar - RX"
+#define D_SENSOR_PIPSOLAR_TX              "Pipsolar - TX"
+#define D_SENSOR_PIPSOLAR_RX              "Pipsolar - RX"
+
+// xsns_115_wooliis.ino
+#define D_IMPORT                          "Importa"
+#define D_EXPORT                          "Esporta"
+#define D_CHARGING                        "In carica"
+#define D_CAPACITY                        "Capacità"
 
 #endif  // _LANGUAGE_IT_IT_H_

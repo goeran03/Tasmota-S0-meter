@@ -18,7 +18,7 @@
 #endif
 
 enum {
-  UT_RD,UT_RDM,UT_CP,UT_RTF,UT_MV,UT_MVB,UT_RT,UT_RTT,UT_RDW,UT_RDWM,UT_WR,UT_WRW,UT_CPR,UT_AND,UT_SCALE,UT_LIM,UT_DBG,UT_GSRT,UT_XPT,UT_END
+  UT_RD,UT_RDM,UT_CP,UT_RTF,UT_MV,UT_MVB,UT_RT,UT_RTT,UT_RDW,UT_RDWM,UT_WR,UT_WRW,UT_CPR,UT_AND,UT_SCALE,UT_LIM,UT_DBG,UT_GSRT,UT_XPT,UT_CPM,UT_END
 };
 
 #define RA8876_DATA_WRITE  0x80
@@ -276,6 +276,7 @@ class uDisplay : public Renderer {
    uint8_t interface;
    uint8_t i2caddr;
    int8_t i2c_scl;
+   int8_t spec_init;
    TwoWire *wire;
    int8_t wire_n;
    int8_t i2c_sda;
@@ -395,7 +396,7 @@ class uDisplay : public Renderer {
 #if ESP_IDF_VERSION_MAJOR < 5
    esp_rgb_panel_t *_rgb_panel;
 #endif //ESP_IDF_VERSION_MAJOR < 5
-   uint16_t *rgb_fb;
+   
 
 
    esp_lcd_i80_bus_handle_t _i80_bus = nullptr;
@@ -445,7 +446,7 @@ class uDisplay : public Renderer {
 
 #ifdef USE_UNIVERSAL_TOUCH
 // universal touch driver
-  void ut_trans(char **sp, uint8_t *ut_code, int32_t size);
+  void ut_trans(char **sp, uint8_t **ut_code);
   int16_t ut_execute(uint8_t *ut_code);
   uint32_t ut_par(char **cp, uint32_t mode);
   uint8_t *ut_rd(uint8_t *io, uint32_t len, uint32_t amode);
@@ -455,18 +456,18 @@ class uDisplay : public Renderer {
 
   uint8_t ut_array[16];
   uint8_t ut_i2caddr;
-  uint8_t ut_spi_cs;
-  int8_t ut_reset;
-  int8_t ut_irq;
+  uint8_t ut_spi_cs = -1;
+  int8_t ut_reset = -1;
+  int8_t ut_irq = -1;
   uint8_t ut_spi_nr;
-  TwoWire *ut_wire;
-  SPIClass *ut_spi;
+  TwoWire *ut_wire = nullptr;;
+  SPIClass *ut_spi = nullptr;;
   SPISettings ut_spiSettings;
   char ut_name[8];
-  uint8_t ut_init_code[32];
-  uint8_t ut_touch_code[32];
-  uint8_t ut_getx_code[20];
-  uint8_t ut_gety_code[20];
+  uint8_t *ut_init_code = nullptr;
+  uint8_t *ut_touch_code = nullptr;
+  uint8_t *ut_getx_code = nullptr;
+  uint8_t *ut_gety_code = nullptr;
 
 #endif // USE_UNIVERSAL_TOUCH
 };

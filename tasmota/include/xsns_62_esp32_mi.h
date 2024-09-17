@@ -18,6 +18,11 @@
 
 */
 #ifdef USE_MI_ESP32
+
+#pragma once
+
+#include <NimBLEDevice.h>
+
 /*********************************************************************************************\
  * structs and types
 \*********************************************************************************************/
@@ -39,8 +44,7 @@ struct frame_crtl_t{
 };
 
 struct mi_payload_t{
-  uint8_t type;
-  uint8_t ten;
+  uint16_t type;
   uint8_t size;
   union {
     struct{ //0d
@@ -56,6 +60,7 @@ struct mi_payload_t{
     uint8_t leak; //14
     uint32_t NMT; //17
     uint8_t door; //19
+    uint16_t objID; //0x0002
     struct{ //01
       uint8_t num;
       uint8_t value;
@@ -141,6 +146,17 @@ struct ATCPacket_t{ //and PVVX
   };
 };
 
+union BTHome_info_t{
+  struct{
+    uint8_t encrypted:1;
+    uint8_t reserved:1;
+    uint8_t triggered:1;
+    uint8_t reserved2:2;
+    uint8_t version:2;
+  };
+  char byte_value;
+};
+
 struct BLERingBufferItem_t{
   uint16_t returnCharUUID;
   uint16_t handle;
@@ -183,6 +199,7 @@ struct {
       uint32_t updateScan:1;
       uint32_t deleteScanTask:1;
 
+
       uint32_t canConnect:1;
       uint32_t willConnect:1;
       uint32_t readingDone:1;
@@ -214,12 +231,12 @@ struct {
     uint32_t directBridgeMode:1; // send every received BLE-packet as a MQTT-message in real-time
     uint32_t activeScan:1;
     uint32_t ignoreBogusBattery:1;
-    uint32_t minimalSummary:1;   // DEPRECATED!!
+    uint32_t handleEveryDevice:1;
   } option;
 #ifdef USE_MI_EXT_GUI
   uint32_t widgetSlot;
 #ifdef USE_ENERGY_SENSOR
-  uint8_t *energy_history;
+  uint8_t energy_history[24];
 #endif //USE_ENERGY_SENSOR
 #endif //USE_MI_EXT_GUI
 
@@ -255,8 +272,9 @@ struct mi_sensor_t{
       uint32_t knob:1;
       uint32_t door:1;
       uint32_t leak:1;
+      uint32_t payload:1;
     };
-    uint32_t raw;
+    uint32_t raw = 0;
   } feature;
   union {
     struct {
@@ -275,23 +293,24 @@ struct mi_sensor_t{
       uint32_t longpress:1; //needs no extra feature bit, because knob is sufficient
       uint32_t door:1;
       uint32_t leak:1;
+      uint32_t payload:1;
     };
-    uint32_t raw;
+    uint32_t raw = 0;
   } eventType;
   union{
     struct{
       uint8_t hasWrongKey:1;
       uint8_t isUnbounded:1;
     };
-    uint8_t raw;
+    uint8_t raw = 0;
   } status;
 
-  int RSSI;
-  uint32_t lastTime;
+  int RSSI = 0;
+  uint32_t lastTime = 0;
   uint32_t lux;
-  uint8_t *lux_history;
+  uint8_t lux_history[24];
   float temp; //Flora, MJ_HT_V1, LYWSD0x, CGx
-  uint8_t *temp_history;
+  uint8_t temp_history[24];
   union {
     struct {
       uint8_t moisture;
@@ -300,8 +319,8 @@ struct mi_sensor_t{
     }; // Flora
     struct {
       float hum;
-      uint8_t *hum_history;
-    }; // MJ_HT_V1, LYWSD0x
+      uint8_t hum_history[24];
+    };
     struct {
       uint16_t events; //"alarms" since boot
       uint32_t NMT;    // no motion time in seconds for the MJYD2S and NLIGHT
@@ -315,9 +334,14 @@ struct mi_sensor_t{
       uint8_t longpress; // dimmer knob pressed without rotating
     };
     uint8_t door;
+
   };
   union {
       uint8_t bat; // many values seem to be hard-coded garbage (LYWSD0x, GCD1)
+  };
+  struct {
+    uint8_t * payload = nullptr;
+    uint8_t payload_len;
   };
 };
 
@@ -349,8 +373,9 @@ void (*const MI32_Commands[])(void) PROGMEM = {&CmndMi32Key, &CmndMi32Name,&Cmnd
 #define PVVX        15
 #define YLKG08      16
 #define YLAI003     17
+#define BTHOME      18
 
-#define MI32_TYPES    17 //count this manually
+#define MI32_TYPES    18 //count this manually
 
 const uint16_t kMI32DeviceID[MI32_TYPES]={ 0x0098, // Flora
                                   0x01aa, // MJ_HT_V1
@@ -369,9 +394,10 @@ const uint16_t kMI32DeviceID[MI32_TYPES]={ 0x0098, // Flora
                                   0x944a, // PVVX -> this is a fake ID
                                   0x03b6, // YLKG08 and YLKG07 - version w/wo mains
                                   0x07bf, // YLAI003
+                                  0xb770, // BTHome -> fake ID
                                   };
 
-const char kMI32DeviceType[] PROGMEM = {"Flora|MJ_HT_V1|LYWSD02|LYWSD03|CGG1|CGD1|NLIGHT|MJYD2S|YLYK01|MHOC401|MHOC303|ATC|MCCGQ02|SJWS01L|PVVX|YLKG08|YLAI003"};
+const char kMI32DeviceType[] PROGMEM = {"Flora|MJ_HT_V1|LYWSD02|LYWSD03|CGG1|CGD1|NLIGHT|MJYD2S|YLYK01|MHOC401|MHOC303|ATC|MCCGQ02|SJWS01L|PVVX|YLKG08|YLAI003|BTHOME"};
 
 const char kMI32_ConnErrorMsg[] PROGMEM = "no Error|could not connect|did disconnect|got no service|got no characteristic|can not read|can not notify|can not write|did not write|notify time out";
 
@@ -457,8 +483,9 @@ enum MI32_BLEInfoMsg {
 const char HTTP_BTN_MENU_MI32[] PROGMEM = "<p><form action='m32' method='get'><button>Mi Dashboard</button></form></p>";
 
 const char HTTP_MI32_SCRIPT_1[] PROGMEM =
-  "function setUp(){setInterval(countUp,1000); setInterval(update,1000);}"
-  "function countUp(){let ti=document.querySelectorAll('.Ti');"
+  "function setUp(){setInterval(countUp,1000); setInterval(update,200);}"
+  "function countUp(){let ti=document.querySelectorAll('.Ti');eb('clock').innerText=Date().slice(4,24);"
+  "eb('numDev').innerText=eb('pr').childElementCount-1;"
   "for(const el of ti){var t=parseInt(el.innerText);el.innerText=t+1;}}"
   "function update(){"
     "fetch('/m32?wi=1').then(r=>r.text())"
@@ -468,7 +495,8 @@ const char HTTP_MI32_SCRIPT_1[] PROGMEM =
         "var d=document.createElement('div');"
         "d.innerHTML=r.trim();"
         "var old=eb(d.firstChild.id);"
-        "old.parentNode.replaceChild(d.firstChild, old);"
+        "if(old == null){eb('pr').appendChild(d.firstChild);}"
+        "else{old.parentNode.replaceChild(d.firstChild, old);}"
       "}"
     "})"
     //".catch((e) => {console.error(e);});" //optional
@@ -480,7 +508,7 @@ const char HTTP_MI32_STYLE[] PROGMEM =
   ".parent{display:grid;grid-template-columns:repeat(auto-fill,350px);grid-template-rows:repeat(auto-fill,220px);"
   "grid-auto-rows:220px;grid-auto-columns:350px;gap:1rem;justify-content:center;}"
   "svg{float:inline-end;}"
-  ".box{padding:10px;border-radius:0.8rem;background-color:rgba(221, 221, 221, 0.2);}"
+  ".box{padding:10px;border-radius:0.8rem;background-color:rgba(221, 221, 221, 0.2);overflow-y:auto;}"
   "@media screen and (min-width: 720px){.wide{grid-column:span 2;grid-row:span 1;}.big {grid-column:span 2;grid-row:span 2;}}"
   ".tall {grid-column:span 1;grid-row:span 2;}"
   "</style>";
@@ -494,8 +522,9 @@ const char HTTP_MI32_STYLE_SVG[] PROGMEM =
 const char HTTP_MI32_PARENT_BLE_ROLE[] PROGMEM = "None|Observer|Peripheral|Central";
 
 const char HTTP_MI32_PARENT_START[] PROGMEM =
-  "<div class='parent'>"
+  "<div class='parent'id='pr'>"
       "<div class='box tall'><h2>MI32 Bridge</h2>"
+          "<span id='clock'></span><br><br>"
           "Observing <span id='numDev'>%u</span> devices<br><br>"
           "Uptime: <span class='Ti'>%u</span> seconds<br><br>"
           "Free Heap: %u kB<br><br>"

@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v13.3.0.3 - Last update 12.01.2024
+ * Updated until v14.1.0.4 - Last update 28.07.2024
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -76,6 +76,7 @@
 #define D_COMMAND "Befehl"
 #define D_CONNECTED "verbunden"
 #define D_CORS_DOMAIN "CORS Domain"
+#define D_COLOR "Color"
 #define D_COUNT "Anzahl"             // used as a noun throughout
 #define D_COUNTER "Zähler"
 #define D_CT_POWER "CT Power"
@@ -119,6 +120,7 @@
 #define D_GROUP "Gruppe"
 #define D_HOST "Host"
 #define D_HALL_EFFECT "Hall Effekt"
+#define D_HEATINDEX "Hitzeindex"
 #define D_HOSTNAME "Hostname"
 #define D_HUMIDITY "Feuchtigkeit"
 #define D_ILLUMINANCE "Beleuchtungsstärke"
@@ -419,7 +421,7 @@
 // xdrv_01_mqtt.ino
 #define D_FINGERPRINT "TLS-Fingerabdruck wird verifiziert…"
 #define D_TLS_CONNECT_FAILED_TO "TLS-Verbindung fehlgeschlagen an"
-#define D_RETRY_IN "Wiederversuch in"
+#define D_RETRY_IN "Erneuter Versuch in"
 #define D_VERIFIED "verifiziert mit Fingerabdruck"
 #define D_INSECURE "unsichere Verbindung aufgrund ungültigen Fingerabdrucks"
 #define D_CONNECT_FAILED_TO "Verbindung fehlgeschlagen aufgrund von"
@@ -504,7 +506,7 @@
 #define D_ZIGBEE_MAPPING_IN_PROGRESS_SEC "Karte in Erstellung (%d s․ verbleibend)"
 #define D_ZIGBEE_MAPPING_NOT_PRESENT "Keine Karte"
 #define D_ZIGBEE_MAP_REFRESH "Zigbee Karte erneuern"
-#define D_ZIGBEE_MAP   "Zigbee Karte"
+#define D_ZIGBEE_MAP "Zigbee Karte"
 #define D_ZIGBEE_PERMITJOIN "Zigbee Kopplung ein"
 #define D_ZIGBEE_GENERATE_KEY "Erzeuge zufälligen Zigbee Netzwerkschlüssel"
 #define D_ZIGBEE_UNKNOWN_DEVICE "Unbekanntes Gerät"
@@ -535,6 +537,11 @@
 #define D_ENERGY_YESTERDAY "Energie gestern"
 #define D_ENERGY_TOTAL "Energie gesamt"
 
+// xsns_100_ina3221.ino
+#define  D_UNIT_CHARGE                    "Ah"
+#define  D_CHARGE                         "Ladung"    
+#define  D_ENERGY                         "Energie"
+
 // xdrv_27_shutter.ino
 #define D_OPEN "Öffnen"
 #define D_CLOSE "Schliessen"
@@ -554,6 +561,7 @@
 #define D_THERMOSTAT_SENSOR           "Aktuelle Temperatur"
 #define D_THERMOSTAT_GRADIENT         "Temperaturänderung"
 #define D_THERMOSTAT_DUTY_CYCLE       "Aussteuergrad"
+#define D_THERMOSTAT_VALVE_POSITION   "Ventilöffnung"
 #define D_THERMOSTAT_CYCLE_TIME       "Periodendauer"
 #define D_THERMOSTAT_PI_AUTOTUNE      "Auto PI-Abstimmung"
 #define D_THERMOSTAT_CONTROL_METHOD   "Reglertyp"
@@ -656,6 +664,24 @@
 #define D_SIGNALSTRENGTH "Signalstärke"
 #define D_CHIPTEMPERATURE "Chiptemperatur"
 
+// xsns_60_GPS
+#define D_LATITUDE             "Breite"
+#define D_LONGITUDE            "Länge"
+#define D_HORIZONTAL_ACCURACY  "Horizontale Genauigkeit"
+#define D_ALTITUDE             "Höhe"
+#define D_VERTICAL_ACCURACY    "Vertikale Genauigkeit"
+#define D_SPEED                "Geschwindigkeit"
+#define D_SPEED_ACCURACY       "Geschwindigkeitsgenauigkeit"
+#define D_HEADING              "Kurs"
+#define D_HEADING_ACCURACY     "Kursgenauigkeit"
+#define D_SAT_FIX              "Satelliten Fix"
+#define D_SAT_FIX_NO_FIX       "Kein Fix"
+#define D_SAT_FIX_DEAD_RECK    "Koppelnavigation"
+#define D_SAT_FIX_2D           "2D"
+#define D_SAT_FIX_3D           "3D"
+#define D_SAT_FIX_GPS_DEAD     "GPS und Koppelnavigation"
+#define D_SAT_FIX_TIME         "Nur Uhrzeit"
+
 // tasmota_template.h - keep them as short as possible to be able to fit them in GUI drop down box
 #define D_SENSOR_NONE          "None"
 #define D_SENSOR_USER          "User"
@@ -704,6 +730,10 @@
 #define D_SENSOR_SPI_MISO      "SPI MISO"
 #define D_SENSOR_SPI_MOSI      "SPI MOSI"
 #define D_SENSOR_SPI_CLK       "SPI CLK"
+#define D_SENSOR_SDIO_CMD      "SDIO CMD"
+#define D_GPIO_TS_SPI_CS       "TS SPI CS"
+#define D_GPIO_TS_RST          "TS RST"
+#define D_GPIO_TS_IRQ          "TS IRQ"
 #define D_SENSOR_SDIO_CMD      "SDIO CMD"
 #define D_SENSOR_SDIO_CLK      "SDIO CLK"
 #define D_SENSOR_SDIO_D0       "SDIO D0"
@@ -776,6 +806,15 @@
 #define D_SENSOR_MAX31855_CLK  "MX31855 CLK"
 #define D_SENSOR_MAX31855_DO   "MX31855 DO"
 #define D_SENSOR_MAX31865_CS   "MX31865 CS"
+#define D_GPIO_RN2XX3_TX       "RN2XX3 Tx"
+#define D_GPIO_RN2XX3_RX       "RN2XX3 Rx"
+#define D_GPIO_RN2XX3_RST      "RN2XX3 Rst"
+#define D_GPIO_ASR650X_TX      "ASR650x Tx"
+#define D_GPIO_ASR650X_RX      "ASR650x Rx"
+#define D_GPIO_LORA_CS         "LoRa CS"
+#define D_GPIO_LORA_RST        "LoRa Rst"
+#define D_GPIO_LORA_BUSY       "LoRa Busy"
+#define D_GPIO_LORA_DI         "LoRa DIO"    // Suffix "0","1","2"
 #define D_SENSOR_NRG_SEL       "HLWBL SEL"  // Suffix "i"
 #define D_SENSOR_NRG_CF1       "HLWBL CF1"
 #define D_SENSOR_HLW_CF        "HLW8012 CF"
@@ -875,6 +914,8 @@
 #define D_SENSOR_ADC_JOYSTICK  "ADC Joystick"
 #define D_SENSOR_ADC_PH        "ADC pH"
 #define D_SENSOR_ADC_MQ        "ADC MQ"
+#define D_SENSOR_ADC_VOLTAGE   "ADC Spannung"
+#define D_SENSOR_ADC_CURRENT   "ADC Strom"
 #define D_GPIO_WEBCAM_PWDN     "CAM_PWDN"
 #define D_GPIO_WEBCAM_RESET    "CAM_RESET"
 #define D_GPIO_WEBCAM_XCLK     "CAM_XCLK"
@@ -891,6 +932,7 @@
 #define D_SENSOR_ETH_PHY_MDC   "ETH MDC"
 #define D_SENSOR_ETH_PHY_MDIO  "ETH MDIO"
 #define D_SENSOR_TCP_TXD       "TCP Tx"
+#define D_SENSOR_TCP_TXD_EN    "TCP Tx En"
 #define D_SENSOR_TCP_RXD       "TCP Rx"
 #define D_SENSOR_IEM3000_TX    "iEM3000 TX"
 #define D_SENSOR_IEM3000_RX    "iEM3000 RX"
@@ -961,6 +1003,7 @@
 #define D_SENSOR_BIOPDU_BIT    "BioPDU Bit"
 #define D_SENSOR_LOX_O2_RX     "LoxO2 RX"
 #define D_GPIO_MAGIC_SWITCH    "MagicSwitch"
+#define D_SENSOR_WOOLIIS_RX    "Wooliis Rx"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -985,6 +1028,7 @@
 #define D_UNIT_LITERS "L"
 #define D_UNIT_LITERS_PER_MIN "l/m"
 #define D_UNIT_LUX "lx"
+#define D_UNIT_METER "m"
 #define D_UNIT_MICROGRAM_PER_CUBIC_METER "µg/m³"
 #define D_UNIT_MICROMETER "µm"
 #define D_UNIT_MICROSECOND "µs"
@@ -1228,5 +1272,11 @@
 // ixrv92_pipsolar.ino
 #define D_SENSOR_PIPSOLAR_TX             "Pipsolar TX"
 #define D_SENSOR_PIPSOLAR_RX             "Pipsolar RX"
+
+// xsns_115_wooliis.ino
+#define D_IMPORT                          "Import"
+#define D_EXPORT                          "Export"
+#define D_CHARGING                        "Aufladen"
+#define D_CAPACITY                        "Kapazität"
 
 #endif  // _LANGUAGE_DE_DE_H_

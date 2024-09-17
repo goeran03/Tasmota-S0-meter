@@ -21,35 +21,37 @@ jobs:
     strategy:
       matrix:
         variant:
-          - tasmota32solo1-safeboot
           - tasmota32-safeboot
+          - tasmota32solo1-safeboot
+          - tasmota32c2-safeboot
           - tasmota32c3-safeboot
-          - tasmota32c3cdc-safeboot
+          - tasmota32c3ser-safeboot
           - tasmota32s2-safeboot
           - tasmota32s2cdc-safeboot
           - tasmota32s3-safeboot
-          - tasmota32s3cdc-safeboot
-          - tasmota32c2-safeboot
+          - tasmota32s3ser-safeboot
           - tasmota32c6-safeboot
-          - tasmota32c6cdc-safeboot
+          - tasmota32c6ser-safeboot
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ref: master
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.x'
       - name: Install dependencies
         run: |
           pip install wheel
           pip install -U platformio
-          cp ./platformio_tasmota_core3_env_sample.ini ./platformio_tasmota_core3_env.ini
           cp ./platformio_override_sample.ini ./platformio_override.ini
+      - name: Add "release" to footer
+        run: |
+          sed -i -e "s/TASMOTA_SHA_SHORT/TASMOTA_SHA_SHORT release-/g" ./tasmota/include/tasmota_version.h
       - name: Run PlatformIO
         run: platformio run -e ${{ matrix.variant }}
       - name: Upload safeboot firmware artifacts
-        uses: actions/upload-artifact@v3
+        uses: jason2866/upload-artifact@v2.0.3
         with:
           name: firmware_safeboot
           path: ./build_output
@@ -72,21 +74,25 @@ jobs:
           - tasmota-zbbridge
           - tasmota-zigbee
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ref: master
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.x'
       - name: Install dependencies
         run: |
           pip install wheel
           pip install -U platformio
+          cp ./platformio_override_sample.ini ./platformio_override.ini
+      - name: Add "release" to footer
+        run: |
+          sed -i -e "s/TASMOTA_SHA_SHORT/TASMOTA_SHA_SHORT release-/g" ./tasmota/include/tasmota_version.h
       - name: Run PlatformIO
         run: platformio run -e ${{ matrix.variant }}
       - name: Upload firmware artifacts
-        uses: actions/upload-artifact@v3
+        uses: jason2866/upload-artifact@v2.0.3
         with:
           name: firmware
           path: ./build_output
@@ -107,37 +113,41 @@ jobs:
           - tasmota32-display
           - tasmota32-ir
           - tasmota32-lvgl
+          - tasmota32c2
           - tasmota32c3
-          - tasmota32c3cdc
+          - tasmota32c6
           - tasmota32s2
           - tasmota32s2cdc
           - tasmota32s3
-          - tasmota32s3cdc
           - tasmota32solo1
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ref: master
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.x'
       - name: Install dependencies
         run: |
           pip install wheel
           pip install -U platformio
+          cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Download safeboot firmwares
-        uses: actions/download-artifact@v3
+        uses: jason2866/download-artifact@v3.0.4
         with:
           name: firmware_safeboot
           path: ./firmware
       - name: Display downloaded files
         run: |
           ls -R ./firmware/
+      - name: Add "release" to footer
+        run: |
+          sed -i -e "s/TASMOTA_SHA_SHORT/TASMOTA_SHA_SHORT release-/g" ./tasmota/include/tasmota_version.h
       - name: Run PlatformIO
         run: platformio run -e ${{ matrix.variant }}
       - name: Upload firmware artifacts
-        uses: actions/upload-artifact@v3
+        uses: jason2866/upload-artifact@v2.0.3
         with:
           name: firmware
           path: ./build_output
@@ -152,29 +162,33 @@ jobs:
         variant: [ tasmota, tasmota32 ]
         language: [ AD, AF, BG, BR, CN, CZ, DE, ES, FR, FY, GR, HE, HU, IT, KO, NL, PL, PT, RO, RU, SE, SK, TR, TW, UK, VN ]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ref: master
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.x'
       - name: Install dependencies
         run: |
           pip install wheel
           pip install -U platformio
+          cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Download safeboot firmwares
-        uses: actions/download-artifact@v3
+        uses: jason2866/download-artifact@v3.0.4
         with:
           name: firmware_safeboot
           path: ./firmware
       - name: Display downloaded files
         run: |
           ls -R ./firmware/
+      - name: Add "release" to footer
+        run: |
+          sed -i -e "s/TASMOTA_SHA_SHORT/TASMOTA_SHA_SHORT release-/g" ./tasmota/include/tasmota_version.h
       - name: Run PlatformIO
         run: platformio run -e ${{ matrix.variant }}-${{ matrix.language }}
       - name: Upload language firmware artifacts
-        uses: actions/upload-artifact@v3
+        uses: jason2866/upload-artifact@v2.0.3
         with:
           name: firmware
           path: ./build_output
@@ -184,14 +198,14 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Download Tasmota firmwares
-      uses: actions/download-artifact@v3
+      uses: jason2866/download-artifact@v3.0.4
       with:
         name: firmware
         path: ./mv_firmware
     - name: Download safeboot firmwares
-      uses: actions/download-artifact@v3
+      uses: jason2866/download-artifact@v3.0.4
       with:
         name: firmware_safeboot
         path: ./mv_firmware

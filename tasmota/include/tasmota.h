@@ -25,7 +25,6 @@
 \*********************************************************************************************/
 
 #define XFUNC_PTR_IN_ROM                    // Enable for keeping tables in ROM (PROGMEM) which seem to have access issues on some flash types
-#define MQTT_DATA_STRING                    // Use heap instead of fixed memory for TasmotaGlobal.mqtt_data
 
 /*********************************************************************************************\
  * Power Type
@@ -81,7 +80,7 @@ const uint8_t MAX_DOMOTICZ_SNS_IDX = 12;    // Max number of Domoticz sensors in
 const uint8_t MAX_KNX_GA = 10;              // Max number of KNX Group Addresses to read that can be set
 const uint8_t MAX_KNX_CB = 10;              // Max number of KNX Group Addresses to write that can be set
 const uint8_t MAX_XNRG_DRIVERS = 32;        // Max number of allowed energy drivers
-const uint8_t MAX_XDRV_DRIVERS = 96;        // Max number of allowed driver drivers
+const uint8_t MAX_XDRV_DRIVERS = 128;       // Max number of allowed driver drivers
 const uint8_t MAX_XSNS_DRIVERS = 128;       // Max number of allowed sensor drivers
 const uint8_t MAX_I2C_DRIVERS = 96;         // Max number of allowed i2c drivers
 const uint8_t MAX_SHUTTERS = 4;             // Max number of shutters
@@ -92,6 +91,7 @@ const uint8_t MAX_IRSEND = 16;              // Max number of IRSEND GPIOs
 const uint8_t MAX_RULE_SETS = 3;            // Max number of rule sets of size 512 characters
 const uint16_t MAX_RULE_SIZE = 512;         // Max number of characters in rules
 const uint16_t VL53LXX_MAX_SENSORS = 8;     // Max number of VL53L0X sensors
+const uint8_t MAX_SR04 = 3; // Max number of SR04 ultrasonic sensors
 
 #ifdef ESP32
 const uint8_t MAX_I2C = 2;                  // Max number of I2C controllers (ESP32 = 2)
@@ -126,8 +126,6 @@ const uint8_t MAX_BUTTON_TEXT = 32;         // Max number of GUI button labels
 const uint8_t MAX_GROUP_TOPICS = 4;         // Max number of Group Topics
 const uint8_t MAX_DEV_GROUP_NAMES = 4;      // Max number of Device Group names
 
-const static char kWifiPhyMode[] PROGMEM = " bgnl"; // Wi-Fi Modes
-
 #ifdef ESP8266
 const uint8_t MAX_ADCS = 1;                 // Max number of ESP8266 ADC pins
 const uint8_t MAX_SWITCHES_TXT = 8;         // Max number of switches user text
@@ -148,7 +146,6 @@ const uint8_t MAX_ROTARIES = 2;             // Max number of Rotary Encoders
 
 const char MQTT_TOKEN_PREFIX[] PROGMEM = "%prefix%";  // To be substituted by mqtt_prefix[x]
 const char MQTT_TOKEN_TOPIC[] PROGMEM = "%topic%";    // To be substituted by mqtt_topic, mqtt_grptopic, mqtt_buttontopic, mqtt_switchtopic
-const char WIFI_HOSTNAME[] = "%s-%04d";     // Expands to <MQTT_TOPIC>-<last 4 decimal chars of MAC address>
 
 const uint8_t CONFIG_FILE_SIGN = 0xA5;      // Configuration file signature
 const uint8_t CONFIG_FILE_XOR = 0x5A;       // Configuration file xor (0 = No Xor)
@@ -211,12 +208,7 @@ const uint16_t TOPSZ = 151;                 // Max number of characters in topic
 #else   // Not ESP8266
 const uint16_t LOG_BUFFER_SIZE = 6096;      // Max number of characters in logbuffer used by weblog, syslog and mqttlog
 #endif  // ESP8266
-
-#ifdef MQTT_DATA_STRING
 const uint16_t MAX_LOGSZ = LOG_BUFFER_SIZE -96;  // Max number of characters in log line - may be overruled which will truncate log entry
-#else
-const uint16_t MAX_LOGSZ = 700;             // Max number of characters in log line
-#endif
 
 const uint8_t SENSOR_MAX_MISS = 5;          // Max number of missed sensor reads before deciding it's offline
 
@@ -290,9 +282,15 @@ const uint32_t LOOP_SLEEP_DELAY = 50;       // Lowest number of milliseconds to 
 #define KNX_SLOT3              28
 #define KNX_SLOT4              29
 #define KNX_SLOT5              30
-#define KNX_SCENE              31
-#define KNX_MAX_device_param   31
-#define MAX_KNXTX_CMNDS        5
+#define KNX_SLOT6              31
+#define KNX_SLOT7              32
+#define KNX_SLOT8              33
+#define KNX_SLOT9              34
+#define KNX_SCENE              35
+#define KNX_DIMMER             36   // aka DPT_Scaling 5.001
+#define KNX_COLOUR             37   // aka DPT_Colour_RGB 232.600 or DPT_Colour_RGBW 251.600
+#define KNX_MAX_device_param   37
+#define MAX_KNXTX_CMNDS        9
 
 // XPT2046 resistive touch driver min/max raw values
 #define	XPT2046_MINX			192
@@ -378,7 +376,7 @@ enum TopicOptions { CMND, STAT, TELE, nu1, RESULT_OR_CMND, RESULT_OR_STAT, RESUL
 
 enum UploadTypes { UPL_TASMOTA = 1, UPL_SETTINGS, UPL_EFM8BB1, UPL_TASMOTACLIENT, UPL_EFR32, UPL_SHD, UPL_CCL, UPL_UFSFILE };
 
-enum ExecuteCommandPowerOptions { POWER_OFF, POWER_ON, POWER_TOGGLE, POWER_BLINK, POWER_BLINK_STOP,
+enum ExecuteCommandPowerOptions { POWER_OFF, POWER_ON, POWER_TOGGLE, POWER_BLINK, POWER_BLINK_STOP, POWER_OFF_FORCE,
                                   POWER_OFF_NO_STATE = 8, POWER_ON_NO_STATE, POWER_TOGGLE_NO_STATE,
                                   POWER_SHOW_STATE = 16 };
 enum SendKeyPowerOptions { POWER_HOLD = 3, POWER_INCREMENT = 4, POWER_INV = 5, POWER_CLEAR = 6, POWER_RELEASE = 7,
@@ -422,7 +420,7 @@ enum LightSubtypes { LST_NONE, LST_SINGLE, LST_COLDWARM, LST_RGB,   LST_RGBW, LS
 enum LightTypes    { LT_BASIC, LT_PWM1,    LT_PWM2,      LT_PWM3,   LT_PWM4,  LT_PWM5,  LT_PWM6, LT_PWM7,
                      LT_NU8,   LT_SERIAL1, LT_SERIAL2,   LT_RGB,    LT_RGBW,  LT_RGBWC, LT_NU14, LT_NU15 };  // Do not insert new fields
 
-enum XsnsFunctions { FUNC_SETTINGS_OVERRIDE, FUNC_SETUP_RING1, FUNC_SETUP_RING2, FUNC_PRE_INIT, FUNC_INIT, FUNC_ACTIVE,
+enum XsnsFunctions { FUNC_SETTINGS_OVERRIDE, FUNC_SETUP_RING1, FUNC_SETUP_RING2, FUNC_PRE_INIT, FUNC_INIT, FUNC_ACTIVE, FUNC_ABOUT_TO_RESTART,
                      FUNC_LOOP, FUNC_SLEEP_LOOP, FUNC_EVERY_50_MSECOND, FUNC_EVERY_100_MSECOND, FUNC_EVERY_200_MSECOND, FUNC_EVERY_250_MSECOND, FUNC_EVERY_SECOND,
                      FUNC_RESET_SETTINGS, FUNC_RESTORE_SETTINGS, FUNC_SAVE_SETTINGS, FUNC_SAVE_AT_MIDNIGHT, FUNC_SAVE_BEFORE_RESTART, FUNC_INTERRUPT_STOP, FUNC_INTERRUPT_START,
                      FUNC_AFTER_TELEPERIOD, FUNC_JSON_APPEND, FUNC_WEB_SENSOR, FUNC_WEB_COL_SENSOR,
@@ -484,6 +482,7 @@ enum SettingsTextIndex { SET_OTAURL,
                          SET_RGX_SSID, SET_RGX_PASSWORD,
                          SET_INFLUXDB_HOST, SET_INFLUXDB_PORT, SET_INFLUXDB_ORG, SET_INFLUXDB_TOKEN, SET_INFLUXDB_BUCKET, SET_INFLUXDB_RP,
                          SET_CANVAS,
+                         SET_TELEGRAM_FINGERPRINT,
                          SET_MAX, // limit of texts stored in Settings
                          // Index above are not stored in Settings and should be handled specifically in SettingText()
                          SET_BUTTON17, SET_BUTTON18, SET_BUTTON19, SET_BUTTON20, SET_BUTTON21, SET_BUTTON22, SET_BUTTON23, SET_BUTTON24,
@@ -520,10 +519,10 @@ enum DevGroupShareItem { DGR_SHARE_POWER = 1, DGR_SHARE_LIGHT_BRI = 2, DGR_SHARE
 
 enum CommandSource { SRC_IGNORE, SRC_MQTT, SRC_RESTART, SRC_BUTTON, SRC_SWITCH, SRC_BACKLOG, SRC_SERIAL, SRC_WEBGUI, SRC_WEBCOMMAND, SRC_WEBCONSOLE, SRC_PULSETIMER,
                      SRC_TIMER, SRC_RULE, SRC_MAXPOWER, SRC_MAXENERGY, SRC_OVERTEMP, SRC_LIGHT, SRC_KNX, SRC_DISPLAY, SRC_WEMO, SRC_HUE, SRC_RETRY, SRC_REMOTE, SRC_SHUTTER,
-                     SRC_THERMOSTAT, SRC_CHAT, SRC_TCL, SRC_BERRY, SRC_FILE, SRC_SSERIAL, SRC_USBCONSOLE, SRC_SO47, SRC_SENSOR, SRC_MAX };
+                     SRC_THERMOSTAT, SRC_CHAT, SRC_TCL, SRC_BERRY, SRC_FILE, SRC_SSERIAL, SRC_USBCONSOLE, SRC_SO47, SRC_SENSOR, SRC_WEB, SRC_MAX };
 const char kCommandSource[] PROGMEM = "I|MQTT|Restart|Button|Switch|Backlog|Serial|WebGui|WebCommand|WebConsole|PulseTimer|"
                                       "Timer|Rule|MaxPower|MaxEnergy|Overtemp|Light|Knx|Display|Wemo|Hue|Retry|Remote|Shutter|"
-                                      "Thermostat|Chat|TCL|Berry|File|SSerial|UsbConsole|SO47|Sensor";
+                                      "Thermostat|Chat|TCL|Berry|File|SSerial|UsbConsole|SO47|Sensor|Web";
 
 const uint8_t kDefaultRfCode[9] PROGMEM = { 0x21, 0x16, 0x01, 0x0E, 0x03, 0x48, 0x2E, 0x1A, 0x00 };
 

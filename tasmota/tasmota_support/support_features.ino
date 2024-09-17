@@ -145,21 +145,24 @@ constexpr uint32_t feature[] = {
 #if defined(USE_I2C) && defined(USE_DISPLAY) && defined(USE_DISPLAY_LCD)
   0x00000080 |  // xdsp_01_lcd.ino
 #endif
-#if defined(USE_I2C) && defined(USE_DISPLAY) && defined(USE_DISPLAY_SSD1306)
-  0x00000100 |  // xdsp_02_ssd1306.ino
-#endif
+// REMOVED
+// #if defined(USE_I2C) && defined(USE_DISPLAY) && defined(USE_DISPLAY_SSD1306)
+//   0x00000100 |  // xdsp_02_ssd1306.ino
+// #endif
 #if defined(USE_I2C) && defined(USE_DISPLAY) && defined(USE_DISPLAY_MATRIX)
   0x00000200 |  // xdsp_03_matrix.ino
 #endif
-#if defined(USE_SPI) && defined(USE_DISPLAY) && defined(USE_DISPLAY_ILI9341)
-  0x00000400 |  // xdsp_04_ili9341.ino
-#endif
+// REMOVED
+// #if defined(USE_SPI) && defined(USE_DISPLAY) && defined(USE_DISPLAY_ILI9341)
+//   0x00000400 |  // xdsp_04_ili9341.ino
+// #endif
 #if defined(USE_SPI) && defined(USE_DISPLAY) && defined(USE_DISPLAY_EPAPER_29)
   0x00000800 |  // xdsp_05_epaper.ino
 #endif
-#if defined(USE_I2C) && defined(USE_DISPLAY) && defined(USE_DISPLAY_SH1106)
-  0x00001000 |  // xdsp_07_sh1106.ino
-#endif
+// REMOVED
+// #if defined(USE_I2C) && defined(USE_DISPLAY) && defined(USE_DISPLAY_SH1106)
+//   0x00001000 |  // xdsp_07_sh1106.ino
+// #endif
 #ifdef USE_MP3_PLAYER
   0x00002000 |  // xdrv_14_mp3.ino
 #endif
@@ -345,8 +348,8 @@ constexpr uint32_t feature[] = {
 #if defined(USE_ENERGY_SENSOR) && defined(USE_PZEM_AC)
   0x00000200 |  // xnrg_05_pzem_ac.ino
 #endif
-#if defined(USE_I2C) && defined(USE_DS3231)
-  0x00000400 |  // xsns_33_ds3231.ino
+#if defined(USE_I2C) && defined(USE_RTC_CHIPS) && defined(USE_DS3231)
+  0x00000400 |  // xdrv_56_rtc_chips.ino
 #endif
 #ifdef USE_HX711
   0x00000800 |  // xsns_34_hx711.ino
@@ -596,9 +599,9 @@ constexpr uint32_t feature[] = {
 #if defined(USE_I2C) && defined(USE_EZOPH)
   0x10000000 |  // xsns_78_ezoph.ino
 #endif
-#if defined(ESP32) && defined(USE_TTGO_WATCH)
-  0x20000000 |  // xdrv_83_esp32watch.ino
-#endif
+// #if defined(ESP32) && defined(USE_TTGO_WATCH)
+//   0x20000000 |  // xdrv_83_esp32watch.ino
+// #endif
 #if defined(ESP32) && defined(USE_ETHERNET)
   0x40000000 |  // xdrv_82_ethernet.ino
 #endif
@@ -657,18 +660,19 @@ constexpr uint32_t feature[] = {
 // #if defined(USE_SPI) && defined(USE_DISPLAY) && defined(USE_DISPLAY_ILI9488)
 //   0x00010000 |  // xdsp_08_ILI9488.ino
 // #endif
-#if defined(USE_SPI) && defined(USE_DISPLAY) && defined(USE_DISPLAY_SSD1351)
-  0x00020000 |  // xdsp_09_SSD1351.ino
-#endif
+// #if defined(USE_SPI) && defined(USE_DISPLAY) && defined(USE_DISPLAY_SSD1351)
+//   0x00020000 |  // xdsp_09_SSD1351.ino
+// #endif
 #if defined(USE_SPI) && defined(USE_DISPLAY) && defined(USE_DISPLAY_RA8876)
   0x00040000 |  // xdsp_10_RA8876.ino
 #endif
-#if defined(USE_SPI) && defined(USE_DISPLAY) && defined(USE_DISPLAY_ST7789)
-  0x00080000 |  // xdsp_12_ST7789.ino
-#endif
-#if defined(USE_SPI) && defined(USE_DISPLAY) && defined(USE_DISPLAY_SSD1331)
-  0x00100000 |  // xdsp_14_SSD1331.ino
-#endif
+// #if defined(USE_SPI) && defined(USE_DISPLAY) && defined(USE_DISPLAY_ST7789)
+//   0x00080000 |  // xdsp_12_ST7789.ino
+// #endif
+// REMOVED
+// #if defined(USE_SPI) && defined(USE_DISPLAY) && defined(USE_DISPLAY_SSD1331)
+//   0x00100000 |  // xdsp_14_SSD1331.ino
+// #endif
 #ifdef USE_UFILESYS
   0x00200000 |  // xdrv_50_filesystem.ino
 #endif
@@ -715,8 +719,8 @@ constexpr uint32_t feature[] = {
 #ifdef USE_BERRY
   0x00000008 |  // xdrv_52_9_berry.ino
 #endif
-#if defined(USE_I2C) && defined(USE_BM8563)
-  0x00000010 |  // xdrv_56_BM8563_RTC.ino
+#if defined(USE_I2C) && defined(USE_RTC_CHIPS) && defined(USE_BM8563)
+  0x00000010 |  // xdrv_56_rtc_chips.ino
 #endif
 #if defined(USE_ENERGY_SENSOR) && defined(USE_ENERGY_DUMMY)
   0x00000020 |  // xnrg_30_dummy.ino
@@ -775,7 +779,7 @@ constexpr uint32_t feature[] = {
 #if defined(USE_ENERGY_SENSOR) && defined(USE_I2C) && defined(USE_ADE7880)
   0x00800000 |  // xnrg_23_ade7880.ino
 #endif
-#if defined(USE_I2C) && defined(USE_PCF85363)
+#if defined(USE_I2C) && defined(USE_RTC_CHIPS) && defined(USE_PCF85363)
   0x01000000 |  // xdrv_56_rtc_chips.ino
 #endif
 #if defined(USE_I2C) && defined(USE_DS3502)
@@ -906,13 +910,27 @@ constexpr uint32_t feature[] = {
 #ifdef USE_GPIO_VIEWER
   0x00000004 |  // xdrv_121_gpioviewer.ino
 #endif
-//  0x00000008 |  // 
-//  0x00000010 |  // 
-//  0x00000020 |  // 
-//  0x00000040 |  // 
-//  0x00000080 |  // 
-//  0x00000100 |  // 
-//  0x00000200 |  // 
+#if defined(USE_I2C) && defined(USE_AMSX915)
+  0x00000008 |  // xsns_114_amsx915.ino
+#endif
+#if defined(USE_SPI) && defined(USE_SPI_LORA)
+  0x00000010 |  // xdrv_73_9_lora.ino
+#endif
+#if defined(USE_I2C) && defined(USE_SPL06_007)
+  0x00000020 |  // xsns_25_spl006-7_sensor.ino
+#endif
+#if defined(USE_I2C) && defined(USE_QMP6988)
+  0x00000040 |  // xsns_28_qmp6988.ino
+#endif
+#ifdef USE_WOOLIIS
+  0x00000080 |  // xsns_115_wooliis.ino
+#endif
+#if defined(USE_I2C) && defined(USE_HX711_M5SCALES)
+  0x00000100 |  // xsns_34_hx711.ino
+#endif
+#if defined(USE_I2C) && defined(USE_RTC_CHIPS) && defined(USE_RX8010)
+  0x00000200 |  // xdrv_56_rtc_chips.ino
+#endif
 //  0x00000400 |  // 
 //  0x00000800 |  // 
 //  0x00001000 |  // 

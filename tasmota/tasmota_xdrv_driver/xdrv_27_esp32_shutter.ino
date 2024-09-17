@@ -1,7 +1,7 @@
 /*
   xdrv_27_esp32_shutter.ino - Shutter/Blind support for Tasmota
 
-  Copyright (C) 2023  Stefan Bode
+  Copyright (C) 2024  Stefan Bode
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -95,7 +95,7 @@ struct SHUTTERSETTINGS {
   uint16_t      shutter_opentime[MAX_SHUTTERS_ESP32];
   uint16_t      shutter_closetime[MAX_SHUTTERS_ESP32];
   int16_t       shuttercoeff[5][MAX_SHUTTERS_ESP32];
-  uint8_t       shutter_options[MAX_SHUTTERS_ESP32];
+  uint8_t       shutter_options[MAX_SHUTTERS_ESP32];       // bit1:INVERT bit2: LOCK  bit3: ExtraEndStop bit4: INVert WebButtons bit5: extraStopRelay
   uint8_t       shutter_set50percent[MAX_SHUTTERS_ESP32];
   uint8_t       shutter_position[MAX_SHUTTERS_ESP32];
   uint8_t       shutter_startrelay[MAX_SHUTTERS_ESP32];
@@ -132,7 +132,8 @@ const char kShutterCommands[] PROGMEM = D_PRFX_SHUTTER "|"
   D_CMND_SHUTTER_SETHALFWAY "|" D_CMND_SHUTTER_SETCLOSE "|" D_CMND_SHUTTER_SETOPEN "|" D_CMND_SHUTTER_INVERT "|" D_CMND_SHUTTER_CLIBRATION "|"
   D_CMND_SHUTTER_MOTORDELAY "|" D_CMND_SHUTTER_FREQUENCY "|" D_CMND_SHUTTER_BUTTON "|" D_CMND_SHUTTER_LOCK "|" D_CMND_SHUTTER_ENABLEENDSTOPTIME "|" D_CMND_SHUTTER_INVERTWEBBUTTONS "|"
   D_CMND_SHUTTER_STOPOPEN "|" D_CMND_SHUTTER_STOPCLOSE "|" D_CMND_SHUTTER_STOPTOGGLE "|" D_CMND_SHUTTER_STOPTOGGLEDIR "|" D_CMND_SHUTTER_STOPPOSITION "|" D_CMND_SHUTTER_INCDEC "|"
-  D_CMND_SHUTTER_UNITTEST "|" D_CMND_SHUTTER_TILTCONFIG "|" D_CMND_SHUTTER_SETTILT "|" D_CMND_SHUTTER_TILTINCDEC "|" D_CMND_SHUTTER_MOTORSTOP "|" D_CMND_SHUTTER_SETUP;
+  D_CMND_SHUTTER_UNITTEST "|" D_CMND_SHUTTER_TILTCONFIG "|" D_CMND_SHUTTER_SETTILT "|" D_CMND_SHUTTER_TILTINCDEC "|" D_CMND_SHUTTER_MOTORSTOP "|" D_CMND_SHUTTER_SETUP "|"
+  D_CMD_SHUTTER_EXTRASTOPRELAY;
 
 void (* const ShutterCommand[])(void) PROGMEM = {
   &CmndShutterOpen, &CmndShutterClose, &CmndShutterToggle, &CmndShutterToggleDir, &CmndShutterStop, &CmndShutterPosition,
@@ -140,7 +141,7 @@ void (* const ShutterCommand[])(void) PROGMEM = {
   &CmndShutterSetHalfway, &CmndShutterSetClose, &CmndShutterSetOpen, &CmndShutterInvert, &CmndShutterCalibration , &CmndShutterMotorDelay,
   &CmndShutterFrequency, &CmndShutterButton, &CmndShutterLock, &CmndShutterEnableEndStopTime, &CmndShutterInvertWebButtons,
   &CmndShutterStopOpen, &CmndShutterStopClose, &CmndShutterStopToggle, &CmndShutterStopToggleDir, &CmndShutterStopPosition, &CmndShutterIncDec,
-  &CmndShutterUnitTest,&CmndShutterTiltConfig,&CmndShutterSetTilt,&CmndShutterTiltIncDec,&CmndShutterMotorStop,&CmndShutterSetup
+  &CmndShutterUnitTest,&CmndShutterTiltConfig,&CmndShutterSetTilt,&CmndShutterTiltIncDec,&CmndShutterMotorStop,&CmndShutterSetup,&CmndShutterExtraStopPulseRelay
   };
 
   const char JSON_SHUTTER_POS[] PROGMEM = "\"" D_PRFX_SHUTTER "%d\":{\"Position\":%d,\"Direction\":%d,\"Target\":%d,\"Tilt\":%d}";
@@ -212,14 +213,12 @@ void ShutterAllowPreStartProcedure(uint8_t i) {
   // Prestart allow e.g. to release a LOCK or something else before the movement start
   // Anyway, as long var1 != 99 this is skipped (luckily)
 #ifdef USE_RULES
-  uint32_t uptime_Local = 0;
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Delay Start? var%d <99>=<%s>, max10s?"),i + 1, rules_vars[i]);
-  uptime_Local = TasmotaGlobal.uptime;
-  while (uptime_Local + 10 > TasmotaGlobal.uptime 
-          && (String)rules_vars[i] == "99") {
-    loop();
+  // wait for response from rules
+  uint32_t end_time = millis() + 10000;  // 10 seconds
+  while (!TimeReached(end_time) && (String)rules_vars[i] == "99") {
+    delay(1);
   }
-  //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Delay Start. Done"));
 #endif  // USE_RULES
 }
 
@@ -247,7 +246,7 @@ bool ShutterButtonHandlerMulti(void)
     Button.last_state[button_index], Button.press_counter[button_index], Button.window_timer[button_index], Shutter[shutter_index].button_simu_pressed);
 
   // multipress event handle back to main procedure
-  if (Button.press_counter[button_index]>3) return false;
+  if (Button.press_counter[button_index]>4) return false;
 
   if (!Shutter[shutter_index].button_simu_pressed) {
     uint8_t pos_press_index = Button.press_counter[button_index]-1;
@@ -293,7 +292,7 @@ bool ShutterButtonHandlerMulti(void)
 
       // reset button to default
       Button.press_counter[button_index] = 0;
-        
+
       CmndShutterPosition();
     }
 
@@ -302,7 +301,7 @@ bool ShutterButtonHandlerMulti(void)
       char scommand[CMDSZ];
       char stopic[TOPSZ];
       for (uint32_t i = 0; i < MAX_SHUTTERS_ESP32; i++) {
-        if ((i==shutter_index) || (ShutterSettings.shutter_button[button_index].mqtt_all)) {
+        if (((i==shutter_index) || (ShutterSettings.shutter_button[button_index].mqtt_all))  && 0 == (ShutterSettings.shutter_options[i] & 2) ) {
           snprintf_P(scommand, sizeof(scommand),PSTR("ShutterPosition%d"), i+1);
           GetGroupTopic_P(stopic, scommand, SET_MQTT_GRP_TOPIC);
           Response_P("%d", position);
@@ -317,7 +316,7 @@ bool ShutterButtonHandlerMulti(void)
   ResponseAppend_P(JSON_SHUTTER_BUTTON, shutter_index+1, Shutter[shutter_index].button_simu_pressed ? 0 : button_index+1, button_press_counter);
   ResponseJsonEnd();
   MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_PRFX_SHUTTER));
-  
+
   // reset simu pressed record
   Shutter[shutter_index].button_simu_pressed = 0;
 
@@ -804,7 +803,11 @@ void ShutterPowerOff(uint8_t i)
         case SRC_PULSETIMER:
         case SRC_SHUTTER:
         case SRC_WEBGUI:
-          ExecuteCommandPowerShutter(cur_relay, 1, SRC_SHUTTER);
+          if (ShutterSettings.shutter_options[i] & 16) {  // There is a special STOP Relay
+            ExecuteCommandPowerShutter(ShutterSettings.shutter_startrelay[i] + 2, 1, SRC_SHUTTER);
+          } else {
+            ExecuteCommandPowerShutter(cur_relay, 1, SRC_SHUTTER);
+          }
           // switch off direction relay to make it power less
           if (((1 << (ShutterSettings.shutter_startrelay[i])) & TasmotaGlobal.power)  && ShutterSettings.shutter_startrelay[i] + 1 != cur_relay) {
             ExecuteCommandPowerShutter(ShutterSettings.shutter_startrelay[i] + 1, 0, SRC_SHUTTER);
@@ -1353,7 +1356,8 @@ void ShutterUpdatePosition(void)
           // sending MQTT result to broker
           snprintf_P(scommand, sizeof(scommand),PSTR(D_SHUTTER "%d"), i + 1);
           GetTopic_P(stopic, STAT, TasmotaGlobal.mqtt_topic, scommand);
-          Response_P("%d", ShutterSettings.shutter_position[i]);
+          uint32_t position = ShutterRealToPercentPosition(Shutter[i].real_position, i);
+          Response_P("%d", (ShutterSettings.shutter_options[i] & 1) ? 100 - position : position);
           MqttPublish(stopic, Settings->flag.mqtt_power_retain);  // CMND_POWERRETAIN
         }
 
@@ -1380,7 +1384,8 @@ void ShutterUpdateVelocity(uint8_t i)
 
 void ShutterWaitForMotorStart(uint8_t i)
 {
-  while (millis() < Shutter[i].last_stop_time + ShutterSettings.shutter_motorstop) {
+  uint32_t end_time = Shutter[i].last_stop_time + ShutterSettings.shutter_motorstop;
+  while (!TimeReached(end_time)) {
     loop();
   }
   //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Stoptime done"));
@@ -1703,6 +1708,11 @@ void CmndShutterEnableEndStopTime(void)
   ShutterOptionsSetHelper(4);
 }
 
+void CmndShutterExtraStopPulseRelay(void)
+{
+  ShutterOptionsSetHelper(16);
+}
+
 void CmndShutterFrequency(void)
 {
   if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= 20000)) {
@@ -1824,13 +1834,14 @@ void CmndShutterPosition(void)
         }
       }
 
+      // special handling fo UP,DOWN,TOGGLE,STOP and similar commands  
+      if ( XdrvMailbox.data_len > 0 ) {
+        // set len to 0 to avoid loop 
+        uint32_t data_len_save = XdrvMailbox.data_len;
+        int32_t  payload_save  = XdrvMailbox.payload;
+        XdrvMailbox.data_len   = 0;
+        XdrvMailbox.payload    = -99;
 
-      // value 0 with data_len > 0 can mean Open
-      // special handling fo UP,DOWN,TOGGLE,STOP command comming with payload -99
-      // STOP will come with payload 0 because predefined value in TASMOTA
-      if ((XdrvMailbox.data_len > 3) && (XdrvMailbox.payload <= 0)) {
-        // set len to 0 to avoid loop on close where payload is 0
-        XdrvMailbox.data_len = 0;
         if (!strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_UP) || !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_OPEN) || ((Shutter[index].direction==0) && !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_STOPOPEN))) {
           CmndShutterOpen();
           return;
@@ -1848,21 +1859,19 @@ void CmndShutterPosition(void)
           return;
         }
         if (!strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_STOP) || ((Shutter[index].direction) && (!strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_STOPOPEN) || !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_STOPCLOSE)))) {
-          // Back to normal: all -99 if not a clear position
-          XdrvMailbox.payload = -99;
           CmndShutterStop();
           return;
         }
-
+        // restore values
+        XdrvMailbox.payload  = payload_save;
+        XdrvMailbox.data_len = data_len_save;
       }
 
       int8_t target_pos_percent = (XdrvMailbox.payload < 0) ? (XdrvMailbox.payload == -99 ? ShutterRealToPercentPosition(Shutter[index].real_position, index) : 0) : ((XdrvMailbox.payload > 100) ? 100 : XdrvMailbox.payload);
-      target_pos_percent = ((ShutterSettings.shutter_options[index] & 1) && ((SRC_MQTT       != TasmotaGlobal.last_source) // 1
-                                                                          && (SRC_SERIAL     != TasmotaGlobal.last_source) // 6
-                                                                          && (SRC_WEBGUI     != TasmotaGlobal.last_source) // 7
-                                                                          && (SRC_WEBCOMMAND != TasmotaGlobal.last_source) // 8
-                                                                             )) ? 100 - target_pos_percent : target_pos_percent;
-
+      target_pos_percent = ((ShutterSettings.shutter_options[index] & 1) && (    (SRC_SERIAL     != TasmotaGlobal.last_source) // 6
+                                                                              && (SRC_WEBGUI     != TasmotaGlobal.last_source) // 7
+                                                                              && (SRC_WEBCOMMAND != TasmotaGlobal.last_source) // 8
+                                                                            )) ? 100 - target_pos_percent : target_pos_percent;
       // if position is either 0 or 100 reset the tilt to avoid tilt moving at the end
       if (target_pos_percent ==   0 && ShutterRealToPercentPosition(Shutter[index].real_position, index)  > 0  ) {Shutter[index].tilt_target_pos = Shutter[index].tilt_config[4];}
       if (target_pos_percent == 100 && ShutterRealToPercentPosition(Shutter[index].real_position, index)  < 100) {Shutter[index].tilt_target_pos = Shutter[index].tilt_config[3];}
@@ -2324,11 +2333,13 @@ bool Xdrv27(uint32_t function)
         for (uint8_t i = 0; i < TasmotaGlobal.shutters_present; i++) {
           ResponseAppend_P(",");
           uint8_t position = ShutterRealToPercentPosition(Shutter[i].real_position, i);
+          position = (ShutterSettings.shutter_options[i] & 1) ? 100 - position : position;
           uint8_t target   = ShutterRealToPercentPosition(Shutter[i].target_position, i);
-          ResponseAppend_P(JSON_SHUTTER_POS, i + 1, (ShutterSettings.shutter_options[i] & 1) ? 100 - position : position, Shutter[i].direction,(ShutterSettings.shutter_options[i] & 1) ? 100 - target : target, Shutter[i].tilt_real_pos );
+          target = (ShutterSettings.shutter_options[i] & 1) ? 100 - target : target;
+          ResponseAppend_P(JSON_SHUTTER_POS, i + 1,  position, Shutter[i].direction, target, Shutter[i].tilt_real_pos );
 #ifdef USE_DOMOTICZ
           if ((0 == TasmotaGlobal.tele_period) && (0 == i)) {
-             DomoticzSensor(DZ_SHUTTER, ShutterRealToPercentPosition(Shutter[i].real_position, i));
+             DomoticzSensor(DZ_SHUTTER, position);
           }
 #endif  // USE_DOMOTICZ
         }

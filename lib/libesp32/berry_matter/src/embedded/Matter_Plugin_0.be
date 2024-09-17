@@ -1,5 +1,5 @@
 #
-# Matter_Plugin.be - generic superclass for all Matter plugins, used to define specific behaviors (light, switch, media...)
+# Matter_Plugin_0.be - generic superclass for all Matter plugins, used to define specific behaviors (light, switch, media...)
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #
@@ -34,17 +34,72 @@ class Matter_Plugin
   # Behavior of the plugin, frequency at which `update_shadow()` is called
   static var UPDATE_TIME = 5000             # default is every 5 seconds
   static var VIRTUAL = false                # set to true only for virtual devices
+  static var BRIDGE = false                 # set to true only for bridged devices (ESP8266 or OpenBK)
+  static var ZIGBEE = false                 # set to true only when mapped to a zigbee device
   var update_next                           # next timestamp for update
   # Configuration of the plugin: clusters and type
-  static var CLUSTERS = {
-    0x001D: [0,1,2,3,0xFFFC,0xFFFD],                # Descriptor Cluster 9.5 p.453
-    0x0039: [0x11],                                 # Bridged Device Basic Information 9.13 p.485
+  static var CLUSTERS = matter.consolidate_clusters(_class, {
+    0x001D: [0,1,2,3],                      # Descriptor Cluster 9.5 p.453
+  })
+  static var COMMANDS = {
+    0x001D: nil,                                    # Descriptor Cluster 9.5 p.453
+  }
+  # static var TYPES = { <device_type>: <revision> }    # needs to be defined for each endpoint
+  # `FEATURE_MAPS` contains any non-zero value per cluster, if not present default to `0`
+  static var FEATURE_MAPS = {               # feature map per cluster
+    0x0031: 0x04,                           # Put Eth for now which should work for any on-network
+    0x0102: 1 + 4,                          # Lift + PA_LF
+    0x0202: 2,                              # Fan: Auto
+  }
+  # `CLUSTER_REVISIONS` contains revision numbers for each cluster, or `1` if not present
+  static var CLUSTER_REVISIONS = {
+    0x0003: 4,                              # New data model format and notation
+    0x0004: 4,                              # New data model format and notation
+    0x0005: 5,                              # "new data model format and notation"
+    0x0006: 5,                              # Addition of Dead Front behavior and associated FeatureMap entry
+    0x0008: 5,                              # "new data model format and notation"
+    0x001D: 2,                              # Semantic tag list; TagList feature
+    # 0x001F: 1,                            # Initial Release
+    0x0028: 2,                              # Added ProductAppearance attribute
+    # 0x002A: 1,                            # Initial Release
+    # 0x002B: 1,                            # Initial Release
+    # 0x002C: 1,                            # Initial Release
+    # 0x0030: 1,                            # Initial Release
+    # 0x0031: 1,                            # Initial Release
+    # 0x0032: 1,                            # Initial Release
+    # 0x0033: 1,                            # Initial Release
+    # 0x0034: 1,                            # Initial Release
+    0x0038: 2,                              #
+    # 0x003B: 1,                            # Initial Release
+    # 0x003C: 1,                            # Initial Release
+    # 0x003E: 1,                            # Initial Release
+    0x003F: 2,                              # Clarify KeySetWrite validation and behavior on invalid epoch key lengths
+    # 0x0040: 1,                            # Initial Release
+    # 0x0041: 1,                            # Initial Release
+    # 0x0042: 1,                            # Initial Release
+    # 0x005B: 1,                            # Initial Release
+    # 0x005C: 1,                            # Initial Release
+    0x0101: 7,                              # Added support for European door locks (unbolt feature)
+    0x0102: 5,                              # New data model format and notation
+    0x0200: 4,                              # Added feature map
+    0x0201: 6,                              # Introduced the LTNE feature and adapted text (spec issue #5778)
+    0x0202: 4,                              # Change conformance for FanModeSe­ quenceEnum
+    0x0204: 2,                              # New data model format and notation, added "Conversion of Temperature Values for Display" section
+    0x0300: 6,                              # Added clarifications to Scenes support for Matter
+    0x0301: 4,                              # New data model format and notation
+    0x0400: 3,                              # New data model format and notation
+    0x0402: 4,                              # New data model format and notation
+    0x0403: 3,                              # New data model format and notation
+    0x0404: 3,                              # New data model format and notation
+    0x0405: 3,                              # New data model format and notation
+    0x0406: 3,                              # New data model format and notation
+    0x0407: 3,                              # New data model format and notation
+    0x0408: 3,                              # New data model format and notation
   }
   # Accepted Update commands for virtual devices
   static var UPDATE_COMMANDS = []
   var device                                # reference to the `device` global object
   var endpoint                              # current endpoint
-  var clusters                              # map from cluster to list of attributes, typically constructed from CLUSTERS hierachy
   var tick                                  # tick value when it was last updated
   var node_label                            # name of the endpoint, used only in bridge mode, "" if none
 
@@ -63,7 +118,6 @@ class Matter_Plugin
   def init(device, endpoint, config)
     self.device = device
     self.endpoint = endpoint
-    self.clusters = self.consolidate_clusters()
     self.parse_configuration(config)
     self.node_label = config.find("name", "")
   end
@@ -91,14 +145,14 @@ class Matter_Plugin
   # Returns true if it's a local device, or false for a
   # remotely device controlled via HTTP
   def is_local_device()
-    return true
+    return !(self.BRIDGE)
   end
 
   #############################################################
   # Stub for updating shadow values (local copies of what we published to the Matter gateway)
   #
   # This method should collect the data from the local or remote device
-  # and call `parse_update(<data>)` when data is available.
+  # and call `parse_status(<data>)` when data is available.
   #
   # TO BE OVERRIDDEN
   # This call is synnchronous and blocking.
@@ -126,11 +180,51 @@ class Matter_Plugin
   end
 
   #############################################################
+  # generate a new event
+  #
+  def publish_event(cluster, event_id, priority, data0, data1, data2)
+    self.device.events.publish_event(self.endpoint, cluster, event_id, true #-urgent-#, priority, data0, data1, data2)
+  end
+  # def publish_event_non_urgent(cluster, event, priority, data0, data1, data2)
+  #   self.device.events.publish_event(self.endpoint, cluster, event, false #-non_urgent-#, priority, data0, data1, data2)
+  # end
+#- testing
+
+var root = matter_device.plugins[0]
+var tlv_solo = matter.TLV.Matter_TLV_item()
+tlv_solo.set(matter.TLV.U4, 42)
+root.publish_event(0x001D, 0, matter.EVENT_CRITICAL, tlv_solo)
+matter_device.events.dump()
+
+-#
+
+# elements are made of `Matter_EventDataIB`
+# var path                        # 
+    # var node                        # u64 as bytes
+    # var endpoint                    # u16
+    # var cluster                     # u32
+    # var event                       # u32
+    # var is_urgent                   # bool
+# var event_number                # u64 as bytes
+# var priority                    # u8
+# # one of
+# var epoch_timestamp             # u64
+# var system_timestamp            # u64
+# var delta_epoch_timestamp       # u64
+# var delta_system_timestamp      # u64
+# # data
+# var data                        # any TLV
+
+# EVENT_DEBUG=0
+# EVENT_INFO=1
+# EVENT_CRITICAL=2
+
+  #############################################################
   # consolidate_clusters
   #
   # Build a consolidated map of all the `CLUSTERS` static vars
   # from the inheritance hierarchy
-  def consolidate_clusters()
+  def get_clusters()
     return self.CLUSTERS
     # def real_super(o) return super(o) end   # enclose `super()` in a static function to disable special behavior for super in instances
     # var ret = {}
@@ -165,6 +259,13 @@ class Matter_Plugin
   #
   # we limit to 3 commands (to we need more?)
   def publish_command(key1, value1, key2, value2, key3, value3)
+    # if zigbee, decompose simple commands
+    if self.ZIGBEE && self.zigbee_mapper && self.zigbee_mapper.resolve_zb_device()
+      self.zigbee_mapper.zb_single_command(key1, value1)
+      self.zigbee_mapper.zb_single_command(key2, value2)
+      self.zigbee_mapper.zb_single_command(key3, value3)
+    end
+
     import json
     var payload = f"{json.dump(key1)}:{json.dump(value1)}"
     if key2 != nil
@@ -181,37 +282,33 @@ class Matter_Plugin
   def get_endpoint()
     return self.endpoint
   end
-  def get_cluster_list()
-    var ret = []
-    for k: self.clusters.keys()
-      ret.push(k)
-    end
-    return ret
+  def get_cluster_list_sorted()
+    return self.device.k2l(self.CLUSTERS)
   end
   def contains_cluster(cluster)
-    return self.clusters.contains(cluster)
+    return self.CLUSTERS.contains(cluster)
   end
-  def get_attribute_list(cluster)
-    return self.clusters.find(cluster, [])
+  # def get_attribute_list(cluster)
+  #   return self.clusters.find(cluster, [])
+  # end
+  # returns as a constant bytes of 16-bit ints, big endian
+  def get_attribute_list_bytes(cluster)
+    return self.CLUSTERS.find(cluster, nil)
   end
   def contains_attribute(cluster, attribute)
-    var attr_list = self.clusters.find(cluster)
+    var attr_list = self.CLUSTERS.find(cluster)
+    # log(f"MTR: contains_attribute {cluster=} {attribute=} {attr_list=}")
     if attr_list != nil
       var idx = 0
-      while idx < size(attr_list)
-        if attr_list[idx] == attribute
+      var attr_sz = size(attr_list) / 2     # group of 16-bit integers, big endian
+      while idx < attr_sz
+        if attr_list.get(idx * 2, -2) == attribute
           return true
         end
         idx += 1
       end
     end
     return false
-  end
-
-  #############################################################
-  # Does it handle this endpoint and this cluster
-  def has(cluster, endpoint)
-    return self.clusters.contains(cluster) && self.endpoints.find(endpoint) != nil
   end
 
   def set_name(n)
@@ -250,7 +347,7 @@ class Matter_Plugin
         return dtl
       elif attribute == 0x0001          # ---------- ServerList / list[cluster-id] ----------
         var sl = TLV.Matter_TLV_array()
-        for cl: self.get_cluster_list()
+        for cl: self.get_cluster_list_sorted()
           sl.add_TLV(nil, TLV.U4, cl)
         end
         return sl
@@ -266,17 +363,38 @@ class Matter_Plugin
         return tlv_solo.set(TLV.U4, 1)    # "Initial Release"
       end
 
-    # ====================================================================================================
-    elif cluster == 0x0039              # ========== Bridged Device Basic Information 9.13 p.485 ==========
-
-      if   attribute == 0x0011          #  ---------- Reachable / bool ----------
-        return tlv_solo.set(TLV.BOOL, 1)     # by default we are reachable
-      else
-        return super(self).read_attribute(session, ctx, tlv_solo)   # rest is handled by 0x0028
-      end
-    else
-      return nil
     end
+
+    # Handle attributes 0xFFF8 - 0xFFFD for all clusters
+    if   attribute == 0xFFF8            # GeneratedCommandList
+      var gcl = TLV.Matter_TLV_array()
+      return gcl                        # return empty list
+    elif attribute == 0xFFFB            # AttributeList
+      var acli = TLV.Matter_TLV_array()
+      var attr_list_bytes = self.get_attribute_list_bytes(cluster)
+      var attr_list_bytes_sz = (attr_list_bytes != nil) ? size(attr_list_bytes) : 0
+      var idx = 0
+      while idx < attr_list_bytes_sz
+        acli.add_TLV(nil, TLV.U2, attr_list_bytes.get(idx * 2, -2))
+        idx += 1
+      end
+      return acli                       # TODO, empty list for now
+    elif attribute == 0xFFFA            # EventList
+      var el = TLV.Matter_TLV_array()
+      return el                         # return empty list
+    elif attribute == 0xFFF9            # AcceptedCommandList
+      var al = TLV.Matter_TLV_array()
+      return al                         # TODO
+    elif attribute == 0xFFFC            # FeatureMap
+      var featuremap = self.FEATURE_MAPS.find(cluster, 0)
+      return tlv_solo.set(TLV.U4, featuremap)
+    elif attribute == 0xFFFD            # ClusterRevision
+      var clusterrevision = self.CLUSTER_REVISIONS.find(cluster, 1)
+      return tlv_solo.set(TLV.U4, clusterrevision)
+    end
+
+    # no handler found, return nil
+    return nil
   end
 
   #############################################################
@@ -412,10 +530,38 @@ class Matter_Plugin
   # The map is pre-cleaned and contains only keys declared in
   # `self.UPDATE_COMMANDS` with the adequate case
   # (no need to handle case-insensitive)
-  def update_virtual(payload_json)
+  def update_virtual(payload)
     # pass
   end
 
+  #######################################################################
+  # _parse_update_virtual: parse a single value out of MtrUpdate JSON
+  #
+  # Used internally by `update_virtual`
+  #
+  # Args
+  #   payload: the native payload (converted from JSON) from MtrUpdate
+  #   key: key name in the JSON payload to read from, do nothing if key does not exist or content is `null`
+  #   old_val: previous value, used to detect a change or return the value unchanged
+  #   type_func: type enforcer for value, typically `int`, `bool`, `str`, `number`, `real`
+  #   cluster/attribute: in case the value has change, publish a change to cluster/attribute. Don't publish if they are `nil`
+  #
+  # Returns:
+  #   `old_val` if key does not exist, JSON value is `null`, or value is unchanged
+  #   or new value from JSON (which is the new shadow value)
+  #
+  def _parse_update_virtual(payload, key, old_val, type_func, cluster, attribute)
+    var val = payload.find(key)
+    if (val != nil)
+      val = type_func(val)
+      if (val != old_val) && (cluster != nil) && (attribute != nil)
+        self.attribute_updated(cluster, attribute)
+      end
+      return val
+    end
+    return old_val
+  end
+  
 end
 
 matter.Plugin = Matter_Plugin
